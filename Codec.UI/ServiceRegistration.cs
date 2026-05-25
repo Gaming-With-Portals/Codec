@@ -1,0 +1,14 @@
+﻿// Copyright © John Gietzen. All Rights Reserved. This source is subject to the GPL license. Please see license.md for more information.
+
+namespace Codec.UI
+{
+    using Microsoft.Extensions.DependencyInjection;
+
+    internal class ServiceRegistration
+    {
+        internal static void Register(IServiceCollection services)
+        {
+            services.AddTransient<Browser>();
+        }
+    }
+}

@@ -44,6 +44,14 @@ namespace Codec
             services.AddKeyedSingleton(file, (s, key) => new NestedFileSystemManager(s.GetRequiredKeyedService<MArchiveV1VirtualFileSystem>(key),
                 (file, fs, fsPath) =>
                 {
+                    foreach (var resolver in s.GetServices<FileSystemResolver>())
+                    {
+                        if (resolver(s, file, fs, fsPath) is FileSystemCreator creator)
+                        {
+                            return new Func<IFileSystem, string, IFileSystem>(creator);
+                        }
+                    }
+
                     if (fs is MArchiveV1VirtualFileSystem &&
                         string.Equals(Path.GetExtension(file), ".bin", StringComparison.OrdinalIgnoreCase) &&
                         Path.GetFileName(Path.GetDirectoryName(file)) == "roms")

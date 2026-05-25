@@ -397,17 +397,17 @@
 
             public ReadOnlySpan<char> GetDirectoryName(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
-            public string? GetDirectoryName(string? path) => throw new NotImplementedException();
+            public string? GetDirectoryName(string? path) => PathExtensions.GetDirectoryName(path);
 
             public ReadOnlySpan<char> GetExtension(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? GetExtension(string? path) => throw new NotImplementedException();
+            public string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
 
             public ReadOnlySpan<char> GetFileName(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? GetFileName(string? path) => throw new NotImplementedException();
+            public string? GetFileName(string? path) => PathExtensions.GetFileName(path);
 
             public ReadOnlySpan<char> GetFileNameWithoutExtension(ReadOnlySpan<char> path) => throw new NotImplementedException();
 

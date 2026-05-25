@@ -3,6 +3,7 @@
 namespace Codec
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO.Abstractions;
     using System.Linq;
     using System.Text;
@@ -93,10 +94,33 @@ namespace Codec
 
         public static string[] Split(string path) => SegmentSplitRegex().Split(path);
 
-        internal static string GetDirectoryName(string path)
+        [return: NotNullIfNotNull("path")]
+        internal static string? GetDirectoryName(string? path)
         {
+            if (path == null)
+            {
+                return null;
+            }
+
             var i = path.LastIndexOfAny(Separators);
-            return i >= 0 ? path[..i] : string.Empty;
+            return i switch
+            {
+                0 => path[..1],
+                > 0 => path[..i],
+                _ => string.Empty,
+            };
+        }
+
+        [return: NotNullIfNotNull("path")]
+        internal static string? GetFileName(string? path)
+        {
+            if (path == null)
+            {
+                return null;
+            }
+
+            var i = path.LastIndexOfAny(Separators);
+            return i >= 0 ? path[(i + 1)..] : path;
         }
 
         public static Regex GlobToRegex(string searchPattern) =>

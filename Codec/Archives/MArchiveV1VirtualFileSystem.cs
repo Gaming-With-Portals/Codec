@@ -16,6 +16,7 @@ namespace Codec.Archives
     using Microsoft.Win32.SafeHandles;
     using System.Linq;
     using static PathExtensions;
+    using Microsoft.Extensions.DependencyInjection;
 
     public sealed class MArchiveV1VirtualFileSystem : IFileSystem, IDisposable
     {
@@ -32,6 +33,20 @@ namespace Codec.Archives
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);
             this.Path = new PathProvider(this);
+        }
+
+        public static void Register(IServiceCollection services)
+        {
+            services.AddSingleton<FileSystemResolver>((s, file, fs, path) =>
+            {
+                if (string.Equals(fs.Path.GetFileName(file), "alldata.bin", StringComparison.OrdinalIgnoreCase))
+                {
+                    var key = s.GetRequiredService<ArchiveOptions>().Key;
+                    return (fs, subPath) => new MArchiveV1VirtualFileSystem(subPath, key, fs);
+                }
+
+                return null;
+            });
         }
 
         public IDirectory Directory { get; }

@@ -10,6 +10,7 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Win32.SafeHandles;
     using static PathExtensions;
     using Entry = (string FolderName, string FileName, long Offset, long Length);
@@ -28,6 +29,24 @@
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);
             this.Path = new PathProvider(this);
+        }
+
+        public static void Register(IServiceCollection services)
+        {
+            services.AddSingleton<FileSystemResolver>((s, file, fs, path) =>
+            {
+                if (string.Equals(fs.Path.GetFileName(file), "BRF.DAT", StringComparison.OrdinalIgnoreCase))
+                {
+                    return static (fs, subPath) =>
+                    {
+                        var file = fs.File.OpenRead(subPath);
+                        var subFs = new BrfDatVirtualFileSystem(file);
+                        return subFs;
+                    };
+                }
+
+                return null;
+            });
         }
 
         private static void Align(Stream stream, long alignment)

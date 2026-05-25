@@ -9,7 +9,6 @@ namespace Codec
     using System.IO.Abstractions;
     using Codec.Archives;
     using DiscUtils.Complete;
-    using DiscUtils.Iso9660;
     using Microsoft.Extensions.DependencyInjection;
 
     public class ArchiveOptions
@@ -39,10 +38,9 @@ namespace Codec
 
             SetupHelper.SetupComplete();
 
-            var file = WellKnownPaths.AllDataBin;
-            services.AddKeyedSingleton(file, (s, key) => new MArchiveV1VirtualFileSystem(Path.Combine(s.GetRequiredService<EnvironmentOptions>().SteamApps, key), s.GetRequiredService<ArchiveOptions>().Key));
-            services.AddKeyedSingleton(file, (s, key) => new NestedFileSystemManager(s.GetRequiredKeyedService<MArchiveV1VirtualFileSystem>(key),
-                (file, fs, fsPath) =>
+            services.AddKeyedTransient<NestedFileSystemManager, string>((s, key) =>
+            {
+                NestedFileSystemManager.Handler handler = (file, fs, fsPath) =>
                 {
                     foreach (var resolver in s.GetServices<FileSystemResolver>())
                     {
@@ -52,44 +50,13 @@ namespace Codec
                         }
                     }
 
-                    if (fs is MArchiveV1VirtualFileSystem &&
-                        string.Equals(Path.GetExtension(file), ".bin", StringComparison.OrdinalIgnoreCase) &&
-                        Path.GetFileName(Path.GetDirectoryName(file)) == "roms")
-                    {
-                        return static (IFileSystem fs, string subPath) =>
-                        {
-                            var file = fs.File.OpenRead(subPath);
-                            var cdSector = new CDSectorStream(file, CDSectorStream.XAForm1);
-                            var cdReader = new CDReader(cdSector, joliet: false);
-                            var subFs = new CDReaderVFSAdapter(cdReader);
-                            return subFs;
-                        };
-                    }
-                    else if (fs is CDReaderVFSAdapter &&
-                        string.Equals(Path.GetFileName(file), "brf.dat", StringComparison.OrdinalIgnoreCase) &&
-                        Path.GetFileName(Path.GetDirectoryName(file)) == "MGS")
-                    {
-                        return static (IFileSystem fs, string subPath) =>
-                        {
-                            var file = fs.File.OpenRead(subPath);
-                            var subFs = new BrfDatVirtualFileSystem(file);
-                            return subFs;
-                        };
-                    }
-                    else if (fs is CDReaderVFSAdapter &&
-                        string.Equals(Path.GetExtension(file), ".dir", StringComparison.OrdinalIgnoreCase) &&
-                        Path.GetFileName(Path.GetDirectoryName(file)) == "MGS")
-                    {
-                        return static (IFileSystem fs, string subPath) =>
-                        {
-                            var file = fs.File.OpenRead(subPath);
-                            var subFs = new StageDirVirtualFileSystem(file);
-                            return subFs;
-                        };
-                    }
-
                     return null;
-                }));
+                };
+
+                var root = new FileSystem();
+                var resolver = handler(key, root, string.Empty)!;
+                return new NestedFileSystemManager(resolver(root, key), handler);
+            });
         }
     }
 }

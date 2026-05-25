@@ -17,6 +17,7 @@ namespace Codec.Archives
     using static PathExtensions;
     using DirEntry = (string name, long offset);
     using FileEntry = (string name, long offset, long size);
+    using Microsoft.Extensions.DependencyInjection;
 
     public sealed class StageDirVirtualFileSystem : IFileSystem, IDisposable
     {
@@ -62,6 +63,24 @@ namespace Codec.Archives
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);
             this.Path = new PathProvider(this);
+        }
+
+        public static void Register(IServiceCollection services)
+        {
+            services.AddSingleton<FileSystemResolver>((s, file, fs, path) =>
+            {
+                if (string.Equals(fs.Path.GetFileName(file), "STAGE.DIR", StringComparison.OrdinalIgnoreCase))
+                {
+                    return static (fs, subPath) =>
+                    {
+                        var file = fs.File.OpenRead(subPath);
+                        var subFs = new StageDirVirtualFileSystem(file);
+                        return subFs;
+                    };
+                }
+
+                return null;
+            });
         }
 
         public IDirectory Directory { get; }

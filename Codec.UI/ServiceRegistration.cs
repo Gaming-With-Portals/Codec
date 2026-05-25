@@ -8,6 +8,7 @@ namespace Codec.UI
     {
         internal static void Register(IServiceCollection services)
         {
+            Codec.ServiceRegistration.Register(services);
             services.AddTransient<Browser>();
         }
     }

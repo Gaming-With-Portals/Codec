@@ -21,7 +21,8 @@ namespace Codec.UI
 
         public Browser(IServiceProvider serviceProvider)
         {
-            this.fsm = serviceProvider.GetRequiredKeyedService<NestedFileSystemManager>(WellKnownPaths.AllDataBin);
+            var key = Path.Combine(serviceProvider.GetRequiredService<EnvironmentOptions>().SteamApps, WellKnownPaths.AllDataBin);
+            this.fsm = serviceProvider.GetRequiredKeyedService<NestedFileSystemManager>(key);
 
             this.InitializeComponent();
             this.saveSelectedDialog.InitialDirectory = Environment.ExpandEnvironmentVariables(this.saveSelectedDialog.InitialDirectory);
@@ -39,7 +40,7 @@ namespace Codec.UI
             };
             this.splitContainer.Panel2.Controls.Add(this.textureDisplay);
 
-            this.fileTree.Nodes.Add(new TreeNode(WellKnownPaths.AllDataBin, 0, 0, [this.CreateExpanderDummy()]) { Tag = this.fsm.RootEntry });
+            this.fileTree.Nodes.Add(new TreeNode(key, 0, 0, [this.CreateExpanderDummy()]) { Tag = this.fsm.RootEntry });
             this.Navigate(this.fsm.RootEntry);
         }
 

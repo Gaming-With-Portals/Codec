@@ -15,7 +15,7 @@
         private readonly Dictionary<string, IFileSystem> fileSystems = new();
         private readonly Handler[] handlers;
 
-        public NestedFileSystemManager(MArchiveV1VirtualFileSystem fs, params Handler[] handlers)
+        public NestedFileSystemManager(IFileSystem fs, params Handler[] handlers)
         {
             this.handlers = handlers;
             this.fileSystems.Add(string.Empty, fs);

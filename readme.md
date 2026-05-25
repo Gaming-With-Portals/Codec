@@ -1,0 +1,25 @@
+RenderLoop
+=======
+
+This project is licensed under the [GPL v3](LICENSE.md) license.
+
+OpenSource Info
+---------------
+
+| Used By | Project | License | Details |
+|---------|---------|---------|---------|
+| **All Projects**                   ||||
+| | [Silk.NET](https://github.com/dotnet/Silk.NET) | [MIT](https://github.com/dotnet/Silk.NET/blob/main/LICENSE.md) | 3D rendering and windowing |
+| | [HIDDevices](https://github.com/DevDecoder/HIDDevices) | [Apache 2.0](https://github.com/DevDecoder/HIDDevices/blob/master/LICENSE.txt) | Device handling |
+| | [CommandLineParser](https://github.com/commandlineparser/commandline) | [MIT](https://github.com/commandlineparser/commandline/blob/master/License.md) | Command line arguments |
+| | [Magick.NET](https://github.com/dlemstra/Magick.NET) | [Apache 2.0](https://github.com/dlemstra/Magick.NET/blob/main/License.txt) | PCX loading |
+| | [System.IO.Abstractions](https://github.com/TestableIO/System.IO.Abstractions) | [MIT](https://github.com/TestableIO/System.IO.Abstractions/blob/main/LICENSE) | Nested filesystems |
+| | [DiscUtils](https://github.com/DiscUtils/DiscUtils) | [MIT](https://github.com/DiscUtils/DiscUtils/blob/develop/LICENSE.txt) | ISO format |
+| | [GMWare.M2](https://gitlab.com/modmyclassic/sega-mega-drive-mini/marchive-batch-tool) | [GPL 3.0](https://gitlab.com/modmyclassic/sega-mega-drive-mini/marchive-batch-tool/-/blob/master/COPYING) | M2 Archive format |
+| | [MGS1-TOOLS](https://github.com/MSylvia/MGS1-TOOLS) | | Reference code |
+| | [mgs_reversing](https://github.com/FoxdieTeam/mgs_reversing) | | Reference code |
+| | [CtxrTool](https://github.com/Jayveer/CtxrTool) | [MIT](https://github.com/Jayveer/CtxrTool/blob/master/README.md) | Reference code |
+| | [MGS-Master-Collection-Noesis](https://github.com/Jayveer/MGS-Master-Collection-Noesis) | | Reference only |
+| | [Metal Gear Master Collection](https://store.steampowered.com/app/2131630/METAL_GEAR_SOLID__Master_Collection_Version/) | Non-transferrable | You need your own license to this software, and your license may not cover this usage. |
+| | [Digital-7 Font](http://style7.website/font.php?font=digital-7) | Freeware for home use | Frequency display |
+| | [Streamline Icons Pack](https://www.streamlineicons.com/) | [License](https://www.notion.so/Free-Pack-License-bec2619f40394856b6eeb6cdbe7d6b7d) | Used for UI icons |

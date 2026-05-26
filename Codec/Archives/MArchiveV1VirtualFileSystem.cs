@@ -19,7 +19,6 @@ namespace Codec.Archives
 
     public sealed class MArchiveV1VirtualFileSystem : IFileSystem, IDisposable
     {
-        private static readonly Dictionary<uint, IMArchiveCodec> CodecLookup = new IMArchiveCodec[] { new ZStandardCodec(), new ZlibCodec(), new FastLzCodec(), }.ToDictionary(c => c.Magic);
         private readonly ArchiveV1 index;
         private bool disposed;
         private Stream sourceStream;
@@ -69,23 +68,8 @@ namespace Codec.Archives
         private static ArchiveV1 ReadIndex(IFileSystem fileSystem, string indexPath, string seed, int keyLength)
         {
             using var fs = fileSystem.File.OpenRead(indexPath);
-            using var decompStream = ReadMArchive(fs, seed, keyLength, out var length) ?? throw new ArgumentException("Invalid archive format.", nameof(indexPath));
+            using var decompStream = MVirtualFileSystem.ReadMArchive(fs, seed, keyLength, out var length) ?? throw new ArgumentException("Invalid archive format.", nameof(indexPath));
             return PsbDecode<ArchiveV1>(decompStream);
-        }
-
-        private static Stream? ReadMArchive(FileSystemStream fs, string seed, int keyLength, out int decompressedLength)
-        {
-            var br = new BinaryReader(fs);
-            var magic = br.ReadUInt32();
-            if (!CodecLookup.TryGetValue(magic, out var codec))
-            {
-                decompressedLength = 0;
-                return null;
-            }
-
-            decompressedLength = br.ReadInt32();
-            var cs = new MArchiveCryptoStream(fs, fs.Name, seed, keyLength);
-            return codec.GetDecompressionStream(cs, decompressedLength);
         }
 
         private static T PsbDecode<T>(Stream decompStream)
@@ -535,7 +519,7 @@ namespace Codec.Archives
             public ReadOnlySpan<char> GetExtension(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
+            public string? GetExtension(string? path) => PathExtensions.GetExtension(path);
 
             public ReadOnlySpan<char> GetFileName(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
@@ -545,7 +529,7 @@ namespace Codec.Archives
             public ReadOnlySpan<char> GetFileNameWithoutExtension(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? GetFileNameWithoutExtension(string? path) => throw new NotImplementedException();
+            public string? GetFileNameWithoutExtension(string? path) => PathExtensions.GetFileNameWithoutExtension(path);
 
             public string GetFullPath(string path) => throw new NotImplementedException();
 
@@ -557,7 +541,7 @@ namespace Codec.Archives
 
             public ReadOnlySpan<char> GetPathRoot(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
-            public string? GetPathRoot(string? path) => throw new NotImplementedException();
+            public string? GetPathRoot(string? path) => PathExtensions.GetPathRoot(path);
 
             public string GetRandomFileName() => throw new NotImplementedException();
 

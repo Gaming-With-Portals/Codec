@@ -95,6 +95,10 @@ namespace Codec
 
         public static string[] Split(string path) => SegmentSplitRegex().Split(path);
 
+        internal static string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
+
+        internal static string? GetFileNameWithoutExtension(string? path) => System.IO.Path.GetFileNameWithoutExtension(path);
+
         [return: NotNullIfNotNull("path")]
         public static string? GetPathRoot(string? path)
         {

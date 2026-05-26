@@ -691,7 +691,7 @@
             public ReadOnlySpan<char> GetExtension(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
+            public string? GetExtension(string? path) => PathExtensions.GetExtension(path);
 
             public ReadOnlySpan<char> GetFileName(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
@@ -701,7 +701,7 @@
             public ReadOnlySpan<char> GetFileNameWithoutExtension(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? GetFileNameWithoutExtension(string? path) => throw new NotImplementedException();
+            public string? GetFileNameWithoutExtension(string? path) => PathExtensions.GetFileNameWithoutExtension(path);
 
             public string GetFullPath(string path) => throw new NotImplementedException();
 
@@ -713,7 +713,7 @@
 
             public ReadOnlySpan<char> GetPathRoot(ReadOnlySpan<char> path) => throw new NotImplementedException();
 
-            public string? GetPathRoot(string? path) => throw new NotImplementedException();
+            public string? GetPathRoot(string? path) => PathExtensions.GetPathRoot(path);
 
             public string GetRandomFileName() => throw new NotImplementedException();
 

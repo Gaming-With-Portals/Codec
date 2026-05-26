@@ -7,6 +7,7 @@ namespace Codec
     using System.CommandLine.Invocation;
     using System.IO;
     using System.IO.Abstractions;
+    using System.Linq;
     using Codec.Archives;
     using DiscUtils.Complete;
     using Microsoft.Extensions.DependencyInjection;
@@ -39,18 +40,10 @@ namespace Codec
             SetupHelper.SetupComplete();
 
             services.AddSingleton(s =>
-                new NestedFileSystemManager(new RootEnumerableFileSystem(), (file, fs, fsPath) =>
-                {
-                    foreach (var resolver in s.GetServices<FileSystemResolver>())
-                    {
-                        if (resolver(s, file, fs, fsPath) is FileSystemCreator creator)
-                        {
-                            return new Func<IFileSystem, string, IFileSystem>(creator);
-                        }
-                    }
-
-                    return null;
-                }));
+            {
+                var handlers = s.GetServices<FileSystemResolver>().Select(r => new FileSystemHandler((a, b, c, d) => r(s, a, b, c, d))).ToArray();
+                return new NestedFileSystemManager(new RootEnumerableFileSystem(), handlers);
+            });
         }
     }
 }

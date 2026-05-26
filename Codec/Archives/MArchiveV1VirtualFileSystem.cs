@@ -37,12 +37,12 @@ namespace Codec.Archives
 
         public static void Register(IServiceCollection services)
         {
-            services.AddSingleton<FileSystemResolver>((s, file, fs, path) =>
+            services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
-                if (string.Equals(fs.Path.GetFileName(file), "alldata.bin", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(parent.Path.GetFileName(parentRelativePath), "alldata.bin", StringComparison.OrdinalIgnoreCase))
                 {
-                    var key = s.GetRequiredService<ArchiveOptions>().Key;
-                    return (fs, subPath) => new MArchiveV1VirtualFileSystem(subPath, key, fs);
+                    var key = serviceProvider.GetRequiredService<ArchiveOptions>().Key;
+                    return (fullPath, parentRelativePath, parent, parentPath) => new MArchiveV1VirtualFileSystem(parentRelativePath, key, parent);
                 }
 
                 return null;

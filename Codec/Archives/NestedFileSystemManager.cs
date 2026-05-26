@@ -9,13 +9,11 @@
 
     public class NestedFileSystemManager
     {
-        public delegate Func<IFileSystem, string, IFileSystem>? Handler(string file, IFileSystem fileSystem, string fileSystemPath);
-
-        private readonly Dictionary<string, Func<IFileSystem, string, IFileSystem>?> nestedFactories = new();
+        private readonly Dictionary<string, FileSystemFactory?> nestedFactories = new();
         private readonly Dictionary<string, IFileSystem> fileSystems = new();
-        private readonly Handler[] handlers;
+        private readonly FileSystemHandler[] handlers;
 
-        public NestedFileSystemManager(IFileSystem fs, params Handler[] handlers)
+        public NestedFileSystemManager(IFileSystem fs, params FileSystemHandler[] handlers)
         {
             this.handlers = handlers;
             this.fileSystems.Add(string.Empty, fs);
@@ -24,33 +22,33 @@
 
         public Entry RootEntry { get; }
 
-        public bool TryFindParentFileSystem(string path, [NotNullWhen(true)] out IFileSystem? fs, [NotNullWhen(true)] out string? fsPath, out string subPath)
+        public bool TryFindParentFileSystem(string path, out string parentRelativePath, [NotNullWhen(true)] out IFileSystem? parent, [NotNullWhen(true)] out string? parentPath)
         {
-            if (this.fileSystems.TryGetValue(path, out fs))
+            if (this.fileSystems.TryGetValue(path, out parent))
             {
-                fsPath = path;
-                subPath = string.Empty;
+                parentPath = path;
+                parentRelativePath = string.Empty;
                 return true;
             }
 
-            if (PathExtensions.GetDirectoryName(path) is string parent && this.TryFindParentFileSystem(parent, out fs, out fsPath, out var rest))
+            if (PathExtensions.GetDirectoryName(path) is string directoryName && this.TryFindParentFileSystem(directoryName, out var relativePath, out parent, out parentPath))
             {
-                subPath = fs.Path.Combine(rest, parent == string.Empty ? path : fs.Path.GetRelativePath(parent, path));
-                if (this.GetOrAddFactory(path, fs, fsPath, out var factory))
+                parentRelativePath = parent.Path.Combine(relativePath, directoryName == string.Empty ? path : parent.Path.GetRelativePath(directoryName, path));
+                if (this.GetOrAddFactory(path, parentRelativePath, parent, parentPath, out var factory))
                 {
-                    fs = factory(fs, subPath);
-                    this.fileSystems.Add(path, fs);
+                    parent = factory(path, parentRelativePath, parent, parentPath);
+                    this.fileSystems.Add(path, parent);
                     this.nestedFactories.Remove(path);
-                    fsPath = path;
-                    subPath = string.Empty;
+                    parentPath = path;
+                    parentRelativePath = string.Empty;
                 }
 
                 return true;
             }
 
-            fs = null;
-            fsPath = null;
-            subPath = path;
+            parent = null;
+            parentPath = null;
+            parentRelativePath = path;
             return false;
         }
 
@@ -89,76 +87,76 @@
 
         public bool FileExists(string path)
         {
-            if (!this.TryFindParentFileSystem(path, out var fs, out _, out var subPath))
+            if (!this.TryFindParentFileSystem(path, out var parentRelativePath, out var parent, out _))
             {
                 throw new FileNotFoundException(path);
             }
 
-            return fs.File.Exists(subPath);
+            return parent.File.Exists(parentRelativePath);
         }
 
         public Stream OpenRead(string path)
         {
-            if (!this.TryFindParentFileSystem(path, out var fs, out _, out var subPath))
+            if (!this.TryFindParentFileSystem(path, out var parentRelativePath, out var parent, out _))
             {
                 throw new FileNotFoundException(path);
             }
 
-            return fs.File.OpenRead(subPath);
+            return parent.File.OpenRead(parentRelativePath);
         }
 
         private IEnumerable<Entry> EnumerateEntries(string path)
         {
-            if (this.TryFindParentFileSystem(path, out var fs, out var fsPath, out var subPath))
+            if (this.TryFindParentFileSystem(path, out var parentRelativePath, out var parent, out var parentPath))
             {
-                foreach (var d in fs.Directory.EnumerateDirectories(subPath))
+                foreach (var d in parent.Directory.EnumerateDirectories(parentRelativePath))
                 {
-                    yield return new(fs.Path.CombineIgnoringAbsolute(fsPath, d), false, true);
+                    yield return new(parent.Path.CombineIgnoringAbsolute(parentPath, d), false, true);
                 }
 
-                foreach (var f in fs.Directory.EnumerateFiles(subPath))
+                foreach (var f in parent.Directory.EnumerateFiles(parentRelativePath))
                 {
-                    var p = fs.Path.CombineIgnoringAbsolute(fsPath, f);
-                    yield return new(p, true, this.IsNestedFileSystem(p, fs, fsPath));
+                    var p = parent.Path.CombineIgnoringAbsolute(parentPath, f);
+                    yield return new(p, true, this.IsNestedFileSystem(p, f, parent, parentPath));
                 }
             }
         }
 
-        private bool IsNestedFileSystem(string file, IFileSystem fs, string fsPath)
+        private bool IsNestedFileSystem(string file, string parentRelativePath, IFileSystem parent, string parentPath)
         {
             if (this.fileSystems.ContainsKey(file))
             {
                 return true;
             }
 
-            return this.GetOrAddFactory(file, fs, fsPath, out _);
+            return this.GetOrAddFactory(file, parentRelativePath, parent, parentPath, out _);
         }
 
-        private bool GetOrAddFactory(string file, IFileSystem fs, string fsPath, [NotNullWhen(true)] out Func<IFileSystem, string, IFileSystem>? factory)
+        private bool GetOrAddFactory(string file, string parentRelativePath, IFileSystem parent, string parentPath, [NotNullWhen(true)] out FileSystemFactory? factory)
         {
             if (!this.nestedFactories.TryGetValue(file, out factory))
             {
-                this.nestedFactories[file] = factory = this.GetNestedFactory(file, fs, fsPath);
+                this.nestedFactories[file] = factory = this.GetNestedFactory(file, parentRelativePath, parent, parentPath);
             }
 
             return factory is not null;
         }
 
-        private Func<IFileSystem, string, IFileSystem>? GetNestedFactory(string file, IFileSystem fs, string fsPath) =>
-            this.handlers.Select(h => h(file, fs, fsPath)).FirstOrDefault(f => f is not null);
+        private FileSystemFactory? GetNestedFactory(string fullPath, string parentRelativePath, IFileSystem parent, string parentPath) =>
+            this.handlers.Select(h => h(fullPath, parentRelativePath, parent, parentPath)).FirstOrDefault(f => f is not null);
 
         public bool TryGetEntry(string path, out Entry entry)
         {
-            if (this.TryFindParentFileSystem(path, out var fs, out var fsPath, out var subPath))
+            if (this.TryFindParentFileSystem(path, out var parentRelativePath, out var parent, out var parentPath))
             {
-                if (subPath == "")
+                if (parentRelativePath == string.Empty)
                 {
-                    entry = new Entry(fsPath, true, true);
+                    entry = new Entry(parentPath, true, true);
                 }
                 else
                 {
-                    path = fs.Path.CombineIgnoringAbsolute(fsPath, subPath);
-                    entry = new Entry(path, fs.File.Exists(subPath), fs.Directory.Exists(subPath) || this.IsNestedFileSystem(subPath, fs, fsPath));
+                    path = parent.Path.CombineIgnoringAbsolute(parentPath, parentRelativePath);
+                    entry = new Entry(path, parent.File.Exists(parentRelativePath), parent.Directory.Exists(parentRelativePath) || this.IsNestedFileSystem(path, parentRelativePath, parent, parentPath));
                 }
 
                 return true;

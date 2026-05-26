@@ -126,7 +126,7 @@ namespace Codec.UI
             this.fileTree.SelectedNode = currentNode;
             currentNode.EnsureVisible();
 
-            if (this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
+            if (this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
             {
                 var entries = this.fsm.EnumerateEntries(entry.Path);
                 var items = entries
@@ -145,7 +145,7 @@ namespace Codec.UI
         private void FileTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             if (e.Node?.Tag is Entry entry && e.Node.Nodes is [TreeNode onlyChild] && onlyChild.Text == "..." &&
-                this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
+                this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
             {
                 e.Node.Nodes.Clear();
                 var entries = this.fsm.EnumerateEntries(entry.Path).Where(e => e.CanEnumerateEntries);
@@ -178,7 +178,7 @@ namespace Codec.UI
                 {
                     this.Navigate(entry);
                 }
-                else if (this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
+                else if (this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
                 {
                     switch (DetectFileType(entry))
                     {
@@ -259,7 +259,7 @@ namespace Codec.UI
             if (this.entryList.SelectedItems.Count == 1)
             {
                 var entry = (Entry)this.entryList.SelectedItems[0]?.Tag!;
-                if (!this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
+                if (!this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
                 {
                     return;
                 }
@@ -329,7 +329,7 @@ namespace Codec.UI
 
                 foreach (var (source, target) in targetFiles)
                 {
-                    if (this.fsm.TryFindParentFileSystem(source, out var fs, out var _, out var subPath))
+                    if (this.fsm.TryFindParentFileSystem(source, out var subPath, out var fs, out var _))
                     {
                         using var input = fs.File.OpenRead(subPath);
                         using var output = File.Create(target);

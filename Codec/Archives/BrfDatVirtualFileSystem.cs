@@ -33,15 +33,14 @@
 
         public static void Register(IServiceCollection services)
         {
-            services.AddSingleton<FileSystemResolver>((s, file, fs, path) =>
+            services.AddSingleton<FileSystemResolver>((servicProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
-                if (string.Equals(fs.Path.GetFileName(file), "BRF.DAT", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(parent.Path.GetFileName(parentRelativePath), "BRF.DAT", StringComparison.OrdinalIgnoreCase))
                 {
-                    return static (fs, subPath) =>
+                    return static (fullPath, parentRelativePath, parent, parentPath) =>
                     {
-                        var file = fs.File.OpenRead(subPath);
-                        var subFs = new BrfDatVirtualFileSystem(file);
-                        return subFs;
+                        var file = parent.File.OpenRead(parentRelativePath);
+                        return new BrfDatVirtualFileSystem(file);
                     };
                 }
 

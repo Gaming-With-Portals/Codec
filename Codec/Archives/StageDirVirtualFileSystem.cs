@@ -67,13 +67,13 @@ namespace Codec.Archives
 
         public static void Register(IServiceCollection services)
         {
-            services.AddSingleton<FileSystemResolver>((s, file, fs, path) =>
+            services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, fileSystemRelativePath, fileSystem, fileSystemPath) =>
             {
-                if (string.Equals(fs.Path.GetFileName(file), "STAGE.DIR", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(fileSystem.Path.GetFileName(fileSystemRelativePath), "STAGE.DIR", StringComparison.OrdinalIgnoreCase))
                 {
-                    return static (fs, subPath) =>
+                    return static (fullPath, fileSystemRelativePath, fileSystem, fileSystemPath) =>
                     {
-                        var file = fs.File.OpenRead(subPath);
+                        var file = fileSystem.File.OpenRead(fileSystemRelativePath);
                         var subFs = new StageDirVirtualFileSystem(file);
                         return subFs;
                     };

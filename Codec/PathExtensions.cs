@@ -3,13 +3,14 @@
 namespace Codec
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.IO.Abstractions;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
 
-    internal static partial class PathExtensions
+    public static partial class PathExtensions
     {
         public static readonly char[] Separators = ['/', '\\'];
 
@@ -95,7 +96,29 @@ namespace Codec
         public static string[] Split(string path) => SegmentSplitRegex().Split(path);
 
         [return: NotNullIfNotNull("path")]
-        internal static string? GetDirectoryName(string? path)
+        public static string? GetPathRoot(string? path)
+        {
+            if (path == null)
+            {
+                return null;
+            }
+
+            var i = path.IndexOfAny(Separators);
+            if (i == -1)
+            {
+                return path.Length > 0 && path[^1] == ':' ? path : string.Empty;
+            }
+
+            if (i == 0)
+            {
+                return path[..1];
+            }
+
+            return path[i - 1] == ':' ? path[..(i + 1)] : string.Empty;
+        }
+
+        [return: NotNullIfNotNull("path")]
+        public static string? GetDirectoryName(string? path)
         {
             if (path == null)
             {
@@ -117,7 +140,7 @@ namespace Codec
         }
 
         [return: NotNullIfNotNull("path")]
-        internal static string? GetFileName(string? path)
+        public static string? GetFileName(string? path)
         {
             if (path == null)
             {
@@ -126,6 +149,39 @@ namespace Codec
 
             var i = path.LastIndexOfAny(Separators);
             return i >= 0 ? path[(i + 1)..] : path.Length > 0 && path[^1] == ':' ? string.Empty : path;
+        }
+
+        public static IEnumerable<string> SplitPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                yield return string.Empty;
+                yield break;
+            }
+
+            var root = PathExtensions.GetPathRoot(path);
+            if (!string.IsNullOrEmpty(root))
+            {
+                yield return root;
+            }
+
+            var ix = root?.Length ?? 0;
+            while (ix < path.Length)
+            {
+                var sep = path.IndexOfAny(PathExtensions.Separators, ix);
+                if (sep < 0)
+                {
+                    yield return path[ix..];
+                    break;
+                }
+
+                if (sep > 0)
+                {
+                    yield return path[ix..sep];
+                }
+
+                ix = sep + 1;
+            }
         }
 
         public static Regex GlobToRegex(string searchPattern) =>

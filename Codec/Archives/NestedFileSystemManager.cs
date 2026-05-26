@@ -147,6 +147,27 @@
         private Func<IFileSystem, string, IFileSystem>? GetNestedFactory(string file, IFileSystem fs, string fsPath) =>
             this.handlers.Select(h => h(file, fs, fsPath)).FirstOrDefault(f => f is not null);
 
+        public bool TryGetEntry(string path, out Entry entry)
+        {
+            if (this.TryFindParentFileSystem(path, out var fs, out var fsPath, out var subPath))
+            {
+                if (subPath == "")
+                {
+                    entry = new Entry(fsPath, true, true);
+                }
+                else
+                {
+                    path = fs.Path.CombineIgnoringAbsolute(fsPath, subPath);
+                    entry = new Entry(path, fs.File.Exists(subPath), fs.Directory.Exists(subPath) || this.IsNestedFileSystem(subPath, fs, fsPath));
+                }
+
+                return true;
+            }
+
+            entry = null!;
+            return false;
+        }
+
         public record Entry(string Path, bool CanOpen, bool CanEnumerateEntries);
     }
 }

@@ -13,11 +13,13 @@ namespace Codec.UI
     using Microsoft.Extensions.DependencyInjection;
     using Codec.Archives;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
+    using System.ComponentModel;
 
     internal partial class Browser : Form
     {
         private readonly NestedFileSystemManager fsm;
         private readonly VirtualImageList<Entry> textureDisplay;
+        private bool suppressUpdates;
 
         public Browser(IServiceProvider serviceProvider)
         {
@@ -53,12 +55,42 @@ namespace Codec.UI
 
         private void Navigate(string path)
         {
-            // TODO: Navigate to the given path, expanding the tree as necessary and selecting the corresponding node.
+            if (this.fsm.TryGetEntry(path, out var entry))
+            {
+                this.Navigate(entry);
+            }
         }
 
         private void Navigate(Entry entry)
         {
+            this.suppressUpdates = true;
+            this.pathBox.Tag = entry.Path;
             this.pathBox.Text = entry.Path;
+
+            var currentNode = this.fileTree.Nodes[0];
+            foreach (var segment in PathExtensions.SplitPath(entry.Path))
+            {
+                this.FileTree_BeforeExpand(this, new(currentNode, false, TreeViewAction.Unknown));
+                currentNode.Expand();
+
+                static string GetName(string path)
+                {
+                    var name = PathExtensions.GetFileName(path);
+                    return string.IsNullOrEmpty(name) ? path : name;
+                }
+
+                var nextNode = currentNode.Nodes.Cast<TreeNode>().Where(n => n.Tag is Entry e && GetName(e.Path) == segment).FirstOrDefault();
+                if (nextNode == null)
+                {
+                    break;
+                }
+
+                currentNode = nextNode;
+            }
+
+            this.fileTree.SelectedNode = currentNode;
+            currentNode.EnsureVisible();
+
             if (this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
             {
                 var entries = this.fsm.EnumerateEntries(entry.Path);
@@ -71,6 +103,8 @@ namespace Codec.UI
 
                 this.textureDisplay.Items = entries.Where(e => string.Equals(Path.GetExtension(e.Path), ".pcx", StringComparison.OrdinalIgnoreCase)); // TODO: Integrate with DetectFileType.
             }
+
+            this.suppressUpdates = false;
         }
 
         private void FileTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -86,9 +120,17 @@ namespace Codec.UI
 
         private void FileTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (e.Node?.Tag is Entry entry)
+            if (!this.suppressUpdates && e.Node?.Tag is Entry entry)
             {
                 this.Navigate(entry);
+            }
+        }
+
+        private void PathBox_Validating(object sender, CancelEventArgs e)
+        {
+            if (!this.suppressUpdates && !this.pathBox.Text.Equals(this.pathBox.Tag))
+            {
+                this.Navigate(this.pathBox.Text);
             }
         }
 

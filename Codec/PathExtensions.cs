@@ -125,7 +125,7 @@ namespace Codec
             }
 
             var i = path.LastIndexOfAny(Separators);
-            return i >= 0 ? path[(i + 1)..] : path;
+            return i >= 0 ? path[(i + 1)..] : path.Length > 0 && path[^1] == ':' ? string.Empty : path;
         }
 
         public static Regex GlobToRegex(string searchPattern) =>

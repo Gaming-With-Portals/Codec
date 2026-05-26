@@ -21,8 +21,7 @@ namespace Codec.UI
 
         public Browser(IServiceProvider serviceProvider)
         {
-            var key = Path.Combine(serviceProvider.GetRequiredService<EnvironmentOptions>().SteamApps, WellKnownPaths.AllDataBin);
-            this.fsm = serviceProvider.GetRequiredKeyedService<NestedFileSystemManager>(key);
+            this.fsm = serviceProvider.GetRequiredService<NestedFileSystemManager>();
 
             this.InitializeComponent();
             this.saveSelectedDialog.InitialDirectory = Environment.ExpandEnvironmentVariables(this.saveSelectedDialog.InitialDirectory);
@@ -40,8 +39,8 @@ namespace Codec.UI
             };
             this.splitContainer.Panel2.Controls.Add(this.textureDisplay);
 
-            this.fileTree.Nodes.Add(new TreeNode(key, 0, 0, [this.CreateExpanderDummy()]) { Tag = this.fsm.RootEntry });
-            this.Navigate(this.fsm.RootEntry);
+            this.fileTree.Nodes.Add(new TreeNode("root", 0, 0, [this.CreateExpanderDummy()]) { Tag = this.fsm.RootEntry });
+            this.Navigate(Path.Combine(serviceProvider.GetRequiredService<EnvironmentOptions>().SteamApps, WellKnownPaths.AllDataBin));
         }
 
         private TreeNode CreateExpanderDummy() => new("...");
@@ -52,6 +51,11 @@ namespace Codec.UI
             string.Equals(Path.GetExtension(entry.Path), ".pcx", StringComparison.OrdinalIgnoreCase) ? 3 : // TODO: Integrate with DetectFileType.
             1;
 
+        private void Navigate(string path)
+        {
+            // TODO: Navigate to the given path, expanding the tree as necessary and selecting the corresponding node.
+        }
+
         private void Navigate(Entry entry)
         {
             this.pathBox.Text = entry.Path;
@@ -59,7 +63,7 @@ namespace Codec.UI
             {
                 var entries = this.fsm.EnumerateEntries(entry.Path);
                 var items = entries
-                    .Select(e => new ListViewItem(Path.GetFileName(e.Path), DetectFileType(e)) { Tag = e })
+                    .Select(e => new ListViewItem(fs.Path.GetFileName(e.Path) switch { "" => e.Path, var x => x }, DetectFileType(e)) { Tag = e })
                     .ToArray();
                 this.entryList.Items.Clear();
                 this.EntryList_SelectedIndexChanged(this.entryList, EventArgs.Empty);
@@ -71,11 +75,12 @@ namespace Codec.UI
 
         private void FileTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node?.Tag is Entry entry && e.Node.Nodes is [TreeNode onlyChild] && onlyChild.Text == "...")
+            if (e.Node?.Tag is Entry entry && e.Node.Nodes is [TreeNode onlyChild] && onlyChild.Text == "..." &&
+                this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
             {
                 e.Node.Nodes.Clear();
                 var entries = this.fsm.EnumerateEntries(entry.Path).Where(e => e.CanEnumerateEntries);
-                e.Node.Nodes.AddRange([.. entries.Select(e => new TreeNode(Path.GetFileName(e.Path), 0, 0, [this.CreateExpanderDummy()]) { Tag = e })]);
+                e.Node.Nodes.AddRange([.. entries.Select(e => new TreeNode(fs.Path.GetFileName(e.Path) switch { "" => e.Path, var x => x }, 0, 0, [this.CreateExpanderDummy()]) { Tag = e })]);
             }
         }
 

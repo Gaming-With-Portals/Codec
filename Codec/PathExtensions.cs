@@ -103,12 +103,17 @@ namespace Codec
             }
 
             var i = path.LastIndexOfAny(Separators);
-            return i switch
+            if (i < 0)
             {
-                0 => path[..1],
-                > 0 => path[..i],
-                _ => string.Empty,
-            };
+                return string.Empty;
+            }
+
+            if (i == 0 || path[i - 1] == ':')
+            {
+                return path.Length == (i + 1) ? string.Empty : path[..(i + 1)];
+            }
+
+            return path[..i];
         }
 
         [return: NotNullIfNotNull("path")]

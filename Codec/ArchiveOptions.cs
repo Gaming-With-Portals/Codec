@@ -38,9 +38,8 @@ namespace Codec
 
             SetupHelper.SetupComplete();
 
-            services.AddKeyedTransient<NestedFileSystemManager, string>((s, key) =>
-            {
-                NestedFileSystemManager.Handler handler = (file, fs, fsPath) =>
+            services.AddSingleton(s =>
+                new NestedFileSystemManager(new RootEnumerableFileSystem(), (file, fs, fsPath) =>
                 {
                     foreach (var resolver in s.GetServices<FileSystemResolver>())
                     {
@@ -51,12 +50,7 @@ namespace Codec
                     }
 
                     return null;
-                };
-
-                var root = new FileSystem();
-                var resolver = handler(key, root, string.Empty)!;
-                return new NestedFileSystemManager(resolver(root, key), handler);
-            });
+                }));
         }
     }
 }

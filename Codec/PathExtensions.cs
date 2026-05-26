@@ -151,6 +151,12 @@ namespace Codec
             return i >= 0 ? path[(i + 1)..] : path.Length > 0 && path[^1] == ':' ? string.Empty : path;
         }
 
+        [return: NotNullIfNotNull("path")]
+        public static string? ChangeExtension(string? path, string? extension)
+        {
+            return System.IO.Path.ChangeExtension(path, extension);
+        }
+
         public static IEnumerable<string> SplitPath(string path)
         {
             if (string.IsNullOrEmpty(path))

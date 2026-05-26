@@ -2,32 +2,32 @@
 
 namespace Codec.Archives
 {
-    using GMWare.M2.Psb;
-    using GMWare.M2.Models;
-    using GMWare.M2.MArchive;
-    using System.IO;
     using System;
-    using System.IO.Abstractions;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Threading;
-    using Microsoft.Win32.SafeHandles;
+    using System.IO;
+    using System.IO.Abstractions;
     using System.Linq;
-    using static PathExtensions;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using GMWare.M2.MArchive;
+    using GMWare.M2.Models;
+    using GMWare.M2.Psb;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Win32.SafeHandles;
 
     public sealed class MArchiveV1VirtualFileSystem : IFileSystem, IDisposable
     {
-        private bool disposed;
+        private static readonly Dictionary<uint, IMArchiveCodec> CodecLookup = new IMArchiveCodec[] { new ZStandardCodec(), new ZlibCodec(), new FastLzCodec(), }.ToDictionary(c => c.Magic);
         private readonly ArchiveV1 index;
+        private bool disposed;
         private Stream sourceStream;
 
         public MArchiveV1VirtualFileSystem(string binPath, string key, IFileSystem? fileSystem = null)
         {
             fileSystem ??= new FileSystem();
-            this.index = ReadIndex(fileSystem.Path.ChangeExtension(binPath, ".psb.m"), key);
+            this.index = ReadIndex(fileSystem, fileSystem.Path.ChangeExtension(binPath, ".psb.m"), key, 64);
             this.sourceStream = fileSystem.File.OpenRead(binPath);
 
             this.Directory = new DirectoryProvider(this);
@@ -39,7 +39,8 @@ namespace Codec.Archives
         {
             services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
-                if (string.Equals(parent.Path.GetFileName(parentRelativePath), "alldata.bin", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(parent.Path.GetExtension(parentRelativePath), ".bin", StringComparison.OrdinalIgnoreCase) &&
+                    parent.File.Exists(parent.Path.ChangeExtension(parentRelativePath, ".psb.m")))
                 {
                     var key = serviceProvider.GetRequiredService<ArchiveOptions>().Key;
                     return (fullPath, parentRelativePath, parent, parentPath) => new MArchiveV1VirtualFileSystem(parentRelativePath, key, parent);
@@ -65,20 +66,36 @@ namespace Codec.Archives
 
         public IPath Path { get; }
 
-        private static ArchiveV1 ReadIndex(string indexPath, string key)
+        private static ArchiveV1 ReadIndex(IFileSystem fileSystem, string indexPath, string seed, int keyLength)
         {
-            var packer = new MArchivePacker(new ZlibCodec(), key, 64);
-            using (var stream = new MemoryStream())
-            {
-                packer.DecompressFile(indexPath, keepOrig: true, outputStream: stream);
+            using var fs = fileSystem.File.OpenRead(indexPath);
+            using var decompStream = ReadMArchive(fs, seed, keyLength, out var length) ?? throw new ArgumentException("Invalid archive format.", nameof(indexPath));
+            return PsbDecode<ArchiveV1>(decompStream);
+        }
 
-                stream.Seek(0, SeekOrigin.Begin);
-                using (var reader = new PsbReader(stream, filter: null))
-                {
-                    var root = reader.Root;
-                    return root.ToObject<ArchiveV1>();
-                }
+        private static Stream? ReadMArchive(FileSystemStream fs, string seed, int keyLength, out int decompressedLength)
+        {
+            var br = new BinaryReader(fs);
+            var magic = br.ReadUInt32();
+            if (!CodecLookup.TryGetValue(magic, out var codec))
+            {
+                decompressedLength = 0;
+                return null;
             }
+
+            decompressedLength = br.ReadInt32();
+            var cs = new MArchiveCryptoStream(fs, fs.Name, seed, keyLength);
+            return codec.GetDecompressionStream(cs, decompressedLength);
+        }
+
+        private static T PsbDecode<T>(Stream decompStream)
+        {
+            var memoryStream = new MemoryStream();
+            decompStream.CopyTo(memoryStream);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            using var reader = new PsbReader(memoryStream, filter: null);
+            var root = reader.Root;
+            return root.ToObject<T>();
         }
 
         public void Dispose()
@@ -101,13 +118,27 @@ namespace Codec.Archives
             }
         }
 
+        private bool TryGetIndexInfo(string? path, [NotNullWhen(true)] out (long Start, long End) span)
+        {
+            if (path != null)
+            {
+                path = string.Join("/", path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries));
+                if (this.index.FileInfo.TryGetValue(path, out var list))
+                {
+                    span = (list[0], list[1]);
+                    return true;
+                }
+            }
+
+            span = default;
+            return false;
+        }
+
         private Stream GetStreamSpan(string path)
         {
-            path = string.Join("/", path.Split(Separators, StringSplitOptions.RemoveEmptyEntries));
-
-            if (this.index.FileInfo.TryGetValue(path, out var span))
+            if (this.TryGetIndexInfo(path, out var span))
             {
-                return new OffsetStreamSpan(this.sourceStream, span[0], span[1]);
+                return new OffsetStreamSpan(this.sourceStream, span.Start, span.End);
             }
 
             var ex = new FileNotFoundException();
@@ -169,7 +200,7 @@ namespace Codec.Archives
                 }
 
                 var glob = PathExtensions.GlobToRegex(searchPattern);
-                var parts = path.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
+                var parts = path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
 
                 var flag = directories ? (files ? (bool?)null : true) : false;
 
@@ -177,7 +208,7 @@ namespace Codec.Archives
                 var seen = new HashSet<string>();
                 foreach (var entry in this.parent.index.FileInfo.Keys)
                 {
-                    var entryParts = entry.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
+                    var entryParts = entry.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
                     if (entryParts.Length <= parts.Length || !PathExtensions.PrefixMatch(parts, entryParts))
                     {
                         continue;
@@ -318,7 +349,7 @@ namespace Codec.Archives
 
             public void Encrypt(string path) => throw new NotImplementedException();
 
-            public bool Exists([NotNullWhen(true)] string? path) => throw new NotImplementedException();
+            public bool Exists([NotNullWhen(true)] string? path) => this.parent.TryGetIndexInfo(path, out _);
 
             public FileAttributes GetAttributes(string path) => throw new NotImplementedException();
 
@@ -481,7 +512,7 @@ namespace Codec.Archives
             public IFileSystem FileSystem => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? ChangeExtension(string? path, string? extension) => throw new NotImplementedException();
+            public string? ChangeExtension(string? path, string? extension) => PathExtensions.ChangeExtension(path, extension);
 
             public string Combine(string path1, string path2) => this.CombineWithSeparator(this.DirectorySeparatorChar, path1, path2);
 

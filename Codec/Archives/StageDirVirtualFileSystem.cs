@@ -707,7 +707,7 @@ namespace Codec.Archives
             public IFileSystem FileSystem => throw new NotImplementedException();
 
             [return: NotNullIfNotNull("path")]
-            public string? ChangeExtension(string? path, string? extension) => throw new NotImplementedException();
+            public string? ChangeExtension(string? path, string? extension) => PathExtensions.ChangeExtension(path, extension);
 
             public string Combine(string path1, string path2) => this.CombineWithSeparator(this.DirectorySeparatorChar, path1, path2);
 

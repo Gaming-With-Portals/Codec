@@ -14,11 +14,14 @@ namespace Codec.UI
     using Codec.Archives;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
     using System.ComponentModel;
+    using System.Media;
+    using NAudio.Wave;
 
     internal partial class Browser : Form
     {
         private readonly NestedFileSystemManager fsm;
         private readonly VirtualImageList<Entry> textureDisplay;
+        private readonly SoundPlayer soundPlayer;
         private bool suppressUpdates;
 
         public Browser(IServiceProvider serviceProvider)
@@ -40,18 +43,50 @@ namespace Codec.UI
                 Visible = false,
             };
             this.splitContainer.Panel2.Controls.Add(this.textureDisplay);
+            this.soundPlayer = new SoundPlayer();
 
             this.fileTree.Nodes.Add(new TreeNode("root", 0, 0, [this.CreateExpanderDummy()]) { Tag = this.fsm.RootEntry });
-            this.Navigate(Path.Combine(serviceProvider.GetRequiredService<EnvironmentOptions>().SteamApps, WellKnownPaths.AllDataBin));
+            this.Navigate(Path.Combine(serviceProvider.GetRequiredService<EnvironmentOptions>().SteamApps, WellKnownPaths.AllDataBin, WellKnownPaths.CD1Path, WellKnownPaths.StageDirPath));
         }
 
         private TreeNode CreateExpanderDummy() => new("...");
 
-        private static int DetectFileType(Entry entry) =>
-            entry.CanEnumerateEntries && !entry.CanOpen ? 0 :
-            entry.CanEnumerateEntries ? 2 :
-            string.Equals(Path.GetExtension(entry.Path), ".pcx", StringComparison.OrdinalIgnoreCase) ? 3 : // TODO: Integrate with DetectFileType.
-            1;
+        private enum FileType
+        {
+            Folder = 0,
+            File = 1,
+            Archive = 2,
+            Image = 3,
+            Video = 4,
+            Audio = 5,
+        }
+
+        private static FileType DetectFileType(Entry entry) =>
+            entry.CanEnumerateEntries && !entry.CanOpen ? FileType.Folder :
+            entry.CanEnumerateEntries ? FileType.Archive :
+            Path.GetExtension(entry.Path).ToUpperInvariant() switch
+            {
+                ".BMP" => FileType.Image,
+                ".GIF" => FileType.Image,
+                ".TIF" => FileType.Image,
+                ".TIFF" => FileType.Image,
+                ".PCX" => FileType.Image,
+                ".PNG" => FileType.Image,
+                ".JPG" => FileType.Image,
+                ".JPEG" => FileType.Image,
+                ".WEBP" => FileType.Image,
+                ".AVI" => FileType.Video,
+                ".MOV" => FileType.Video,
+                ".MP4" => FileType.Video,
+                ".MKV" => FileType.Video,
+                ".WEBM" => FileType.Video,
+                ".MID" => FileType.Audio,
+                ".MIDI" => FileType.Audio,
+                ".MP3" => FileType.Audio,
+                ".OGG" => FileType.Audio,
+                ".WAV" => FileType.Audio,
+                _ => FileType.File,
+            };
 
         private void Navigate(string path)
         {
@@ -95,13 +130,13 @@ namespace Codec.UI
             {
                 var entries = this.fsm.EnumerateEntries(entry.Path);
                 var items = entries
-                    .Select(e => new ListViewItem(fs.Path.GetFileName(e.Path) switch { "" => e.Path, var x => x }, DetectFileType(e)) { Tag = e })
+                    .Select(e => new ListViewItem(fs.Path.GetFileName(e.Path) switch { "" => e.Path, var x => x }, (int)DetectFileType(e)) { Tag = e })
                     .ToArray();
                 this.entryList.Items.Clear();
                 this.EntryList_SelectedIndexChanged(this.entryList, EventArgs.Empty);
                 this.entryList.Items.AddRange(items);
 
-                this.textureDisplay.Items = entries.Where(e => string.Equals(Path.GetExtension(e.Path), ".pcx", StringComparison.OrdinalIgnoreCase)); // TODO: Integrate with DetectFileType.
+                this.textureDisplay.Items = entries.Where(e => DetectFileType(e) == FileType.Image);
             }
 
             this.suppressUpdates = false;
@@ -143,24 +178,43 @@ namespace Codec.UI
                 {
                     this.Navigate(entry);
                 }
-                else
+                else if (this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
                 {
-                    // TODO: Integrate with DetectFileType.
-                    if (string.Equals(Path.GetExtension(entry.Path), ".pcx", StringComparison.OrdinalIgnoreCase))
+                    switch (DetectFileType(entry))
                     {
-                        if (this.fsm.TryFindParentFileSystem(entry.Path, out var fs, out var _, out var subPath))
-                        {
-                            var file = fs.File.OpenRead(subPath);
-                            var childForm = new Form();
-                            childForm.Controls.Add(new PictureBox
+                        case FileType.Image:
                             {
-                                Dock = DockStyle.Fill,
-                                SizeMode = PictureBoxSizeMode.Zoom,
-                                Image = new MagickImage(file).ToBitmap(),
-                                BackColor = Color.Black,
-                            });
-                            childForm.Show(this);
-                        }
+                                using var file = fs.File.OpenRead(subPath);
+                                var childForm = new Form();
+                                childForm.Controls.Add(new PictureBox
+                                {
+                                    Dock = DockStyle.Fill,
+                                    SizeMode = PictureBoxSizeMode.Zoom,
+                                    Image = new MagickImage(file).ToBitmap(),
+                                    BackColor = Color.Black,
+                                });
+                                childForm.Show(this);
+                            }
+                            break;
+                        case FileType.Audio:
+                            {
+                                this.soundPlayer.Stop();
+                                try
+                                {
+                                    using var file = fs.File.OpenRead(subPath);
+                                    using var reader = new StreamMediaFoundationReader(file);
+                                    var memoryStream = new MemoryStream();
+                                    WaveFileWriter.WriteWavFileToStream(memoryStream, reader);
+                                    memoryStream.Seek(0, SeekOrigin.Begin);
+                                    this.soundPlayer.Stream = memoryStream;
+                                    this.soundPlayer.Play();
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show(this, $"Failed to play audio: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                }
+                            }
+                            break;
                     }
                 }
             }

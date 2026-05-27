@@ -4,6 +4,7 @@ namespace Codec
 {
     using System;
     using Codec.Archives;
+    using Codec.Files;
     using DiscUtils.Iso9660;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,8 @@ namespace Codec
     {
         public static void Register(IServiceCollection services)
         {
+            ImageMagickBitmapResolver.Register(services);
+
             BrfDatVirtualFileSystem.Register(services);
             StageDirVirtualFileSystem.Register(services);
             PsbVirtualFileSystem.Register(services);

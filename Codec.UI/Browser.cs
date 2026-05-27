@@ -16,17 +16,22 @@ namespace Codec.UI
     using System.ComponentModel;
     using System.Media;
     using NAudio.Wave;
+    using Codec.Files;
 
     internal partial class Browser : Form
     {
+        private readonly IServiceProvider serviceProvider;
         private readonly NestedFileSystemManager fsm;
+        private readonly List<FileHandlerResolver<Bitmap>> imageResolvers;
         private readonly VirtualImageList<Entry> textureDisplay;
         private readonly SoundPlayer soundPlayer;
         private bool suppressUpdates;
 
         public Browser(IServiceProvider serviceProvider)
         {
+            this.serviceProvider = serviceProvider;
             this.fsm = serviceProvider.GetRequiredService<NestedFileSystemManager>();
+            this.imageResolvers = [.. serviceProvider.GetServices<FileHandlerResolver<Bitmap>>()];
 
             this.InitializeComponent();
             this.saveSelectedDialog.InitialDirectory = Environment.ExpandEnvironmentVariables(this.saveSelectedDialog.InitialDirectory);
@@ -34,8 +39,9 @@ namespace Codec.UI
             this.textureDisplay = new VirtualImageList<Entry>(
                 entry =>
                 {
-                    using var textureFile = this.fsm.OpenRead(entry.Path);
-                    return Task.FromResult(new MagickImage(textureFile).ToBitmap());
+                    this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var fsPath);
+                    var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
+                    return Task.FromResult(resolver(entry.Path, subPath, fs, fsPath));
                 },
                 InterpolationMode.NearestNeighbor)
             {
@@ -178,22 +184,25 @@ namespace Codec.UI
                 {
                     this.Navigate(entry);
                 }
-                else if (this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
+                else if (this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var fsPath))
                 {
                     switch (DetectFileType(entry))
                     {
                         case FileType.Image:
                             {
-                                using var file = fs.File.OpenRead(subPath);
-                                var childForm = new Form();
-                                childForm.Controls.Add(new PictureBox
+                                var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
+                                if (resolver != null)
                                 {
-                                    Dock = DockStyle.Fill,
-                                    SizeMode = PictureBoxSizeMode.Zoom,
-                                    Image = new MagickImage(file).ToBitmap(),
-                                    BackColor = Color.Black,
-                                });
-                                childForm.Show(this);
+                                    var childForm = new Form();
+                                    childForm.Controls.Add(new PictureBox
+                                    {
+                                        Dock = DockStyle.Fill,
+                                        SizeMode = PictureBoxSizeMode.Zoom,
+                                        Image = resolver(entry.Path, subPath, fs, fsPath),
+                                        BackColor = Color.Black,
+                                    });
+                                    childForm.Show(this);
+                                }
                             }
                             break;
                         case FileType.Audio:

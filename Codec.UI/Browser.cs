@@ -264,19 +264,14 @@ namespace Codec.UI
                     return;
                 }
 
-                using var input = fs.File.OpenRead(subPath);
-
                 MagickImageInfo? fileInfo = null;
                 try
                 {
+                    using var input = fs.File.OpenRead(subPath);
                     fileInfo = new MagickImageInfo(input);
                 }
                 catch (MagickMissingDelegateErrorException)
                 {
-                }
-                finally
-                {
-                    input.Seek(0, SeekOrigin.Begin);
                 }
 
                 this.saveSelectedDialog.Filter = fileInfo != null
@@ -292,6 +287,7 @@ namespace Codec.UI
 
                 if (fs != null)
                 {
+                    using var input = fs.File.OpenRead(subPath);
                     var path = this.saveSelectedDialog.FileName;
                     if (Path.GetExtension(path) != Path.GetExtension(subPath))
                     {

@@ -13,6 +13,7 @@ namespace Codec
         {
             BrfDatVirtualFileSystem.Register(services);
             StageDirVirtualFileSystem.Register(services);
+            PsbVirtualFileSystem.Register(services);
             MVirtualFileSystem.Register(services);
             MArchiveV1VirtualFileSystem.Register(services);
             services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>

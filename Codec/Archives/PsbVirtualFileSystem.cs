@@ -5,49 +5,63 @@ namespace Codec.Archives
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using System.IO;
     using System.IO.Abstractions;
     using System.Linq;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using GMWare.M2.MArchive;
-    using GMWare.M2.Models;
     using GMWare.M2.Psb;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Win32.SafeHandles;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
-    public sealed class MArchiveV1VirtualFileSystem : IFileSystem, IDisposable
+    public sealed class PsbVirtualFileSystem : IFileSystem, IDisposable
     {
-        private readonly ArchiveV1 index;
-        private bool disposed;
-        private Stream sourceStream;
+        private readonly string filePath;
+        private readonly IFileSystem fileSystem;
+        private readonly List<string> index;
 
-        public MArchiveV1VirtualFileSystem(string binPath, string key, IFileSystem? fileSystem = null)
+        public PsbVirtualFileSystem(string filePath, IFileSystem? fileSystem = null)
         {
             fileSystem ??= new FileSystem();
-            this.index = ReadIndex(fileSystem, fileSystem.Path.ChangeExtension(binPath, ".psb.m"), key, 64);
-            this.sourceStream = fileSystem.File.OpenRead(binPath);
+            using var fs = fileSystem.File.OpenRead(filePath);
+            this.index = Index(PsbDecode(fs));
+            this.filePath = filePath;
+            this.fileSystem = fileSystem;
+            this.IndexFileName = fileSystem.Path.ChangeExtension(fileSystem.Path.GetFileName(filePath), ".json")!;
 
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);
             this.Path = new PathProvider(this);
         }
 
+        private static List<string> Index(PsbReader psbReader)
+        {
+            var root = psbReader.Root;
+            psbReader.LoadAllStreamData();
+            return [.. psbReader.StreamCache.Keys.Select(k => $"_stream.{k}")];
+        }
+
         public static void Register(IServiceCollection services)
         {
             services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
-                if (string.Equals(parent.Path.GetExtension(parentRelativePath), ".bin", StringComparison.OrdinalIgnoreCase) &&
-                    parent.File.Exists(parent.Path.ChangeExtension(parentRelativePath, ".psb.m")))
+                if (string.Equals(parent.Path.GetExtension(parentRelativePath), ".psb", StringComparison.OrdinalIgnoreCase))
                 {
-                    var key = serviceProvider.GetRequiredService<ArchiveOptions>().Key;
-                    return (fullPath, parentRelativePath, parent, parentPath) => new MArchiveV1VirtualFileSystem(parentRelativePath, key, parent);
+                    var seed = serviceProvider.GetRequiredService<ArchiveOptions>().Key;
+                    return (fullPath, parentRelativePath, parent, parentPath) => new PsbVirtualFileSystem(parentRelativePath, parent);
                 }
 
                 return null;
             });
         }
+
+        public string IndexFileName { get; }
 
         public IDirectory Directory { get; }
 
@@ -65,11 +79,12 @@ namespace Codec.Archives
 
         public IPath Path { get; }
 
-        private static ArchiveV1 ReadIndex(IFileSystem fileSystem, string indexPath, string seed, int keyLength)
+        internal static PsbReader PsbDecode(Stream decompStream)
         {
-            using var fs = fileSystem.File.OpenRead(indexPath);
-            using var decompStream = MVirtualFileSystem.ReadMArchive(fs, seed, keyLength, out var length) ?? throw new ArgumentException("Invalid archive format.", nameof(indexPath));
-            return PsbVirtualFileSystem.PsbDecode(decompStream).Root.ToObject<ArchiveV1>();
+            var memoryStream = new MemoryStream();
+            decompStream.CopyTo(memoryStream);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            return new PsbReader(memoryStream, filter: null);
         }
 
         public void Dispose()
@@ -80,50 +95,13 @@ namespace Codec.Archives
 
         private void Dispose(bool disposing)
         {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    this.sourceStream?.Dispose();
-                }
-
-                this.sourceStream = null!;
-                this.disposed = true;
-            }
-        }
-
-        private bool TryGetIndexInfo(string? path, [NotNullWhen(true)] out (long Start, long End) span)
-        {
-            if (path != null)
-            {
-                path = string.Join("/", path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries));
-                if (this.index.FileInfo.TryGetValue(path, out var list))
-                {
-                    span = (list[0], list[1]);
-                    return true;
-                }
-            }
-
-            span = default;
-            return false;
-        }
-
-        private Stream GetStreamSpan(string path)
-        {
-            if (this.TryGetIndexInfo(path, out var span))
-            {
-                return new OffsetStreamSpan(this.sourceStream, span.Start, span.End);
-            }
-
-            var ex = new FileNotFoundException();
-            throw new FileNotFoundException(ex.Message, path);
         }
 
         private class DirectoryProvider : IDirectory
         {
-            private MArchiveV1VirtualFileSystem parent;
+            private PsbVirtualFileSystem parent;
 
-            public DirectoryProvider(MArchiveV1VirtualFileSystem parent)
+            public DirectoryProvider(PsbVirtualFileSystem parent)
             {
                 this.parent = parent;
             }
@@ -168,44 +146,26 @@ namespace Codec.Archives
 
             private IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, bool files = true, bool directories = true)
             {
-                if (searchOption != SearchOption.TopDirectoryOnly)
+                if (path != string.Empty)
                 {
-                    throw new NotImplementedException();
+                    throw new DirectoryNotFoundException();
                 }
 
                 var glob = PathExtensions.GlobToRegex(searchPattern);
-                var parts = path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
-
-                var flag = directories ? (files ? (bool?)null : true) : false;
-
-                var pathExists = false;
-                var seen = new HashSet<string>();
-                foreach (var entry in this.parent.index.FileInfo.Keys)
+                if (files)
                 {
-                    var entryParts = entry.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
-                    if (entryParts.Length <= parts.Length || !PathExtensions.PrefixMatch(parts, entryParts))
+                    if (glob.IsMatch(this.parent.IndexFileName))
                     {
-                        continue;
+                        yield return this.parent.IndexFileName;
                     }
 
-                    var segmentIndex = parts.Length;
-                    var nextSegment = entryParts[segmentIndex];
-                    if (!seen.Add(nextSegment))
+                    foreach (var entry in this.parent.index)
                     {
-                        continue;
+                        if (glob.IsMatch(entry))
+                        {
+                            yield return entry;
+                        }
                     }
-
-                    pathExists = true;
-                    var nextSegmentIsDirectory = entryParts.Length > segmentIndex + 1;
-                    if (!(nextSegmentIsDirectory != flag) && glob.IsMatch(nextSegment))
-                    {
-                        yield return string.Concat(parts.Select(p => p + "/")) + nextSegment;
-                    }
-                }
-
-                if (!pathExists)
-                {
-                    throw new DirectoryNotFoundException();
                 }
             }
 
@@ -276,9 +236,9 @@ namespace Codec.Archives
 
         private class FileProvider : IFile
         {
-            private MArchiveV1VirtualFileSystem parent;
+            private PsbVirtualFileSystem parent;
 
-            public FileProvider(MArchiveV1VirtualFileSystem parent)
+            public FileProvider(PsbVirtualFileSystem parent)
             {
                 this.parent = parent;
             }
@@ -323,7 +283,9 @@ namespace Codec.Archives
 
             public void Encrypt(string path) => throw new NotImplementedException();
 
-            public bool Exists([NotNullWhen(true)] string? path) => this.parent.TryGetIndexInfo(path, out _);
+            public bool Exists([NotNullWhen(true)] string? path) =>
+                string.Equals(path, this.parent.IndexFileName, StringComparison.OrdinalIgnoreCase) ||
+                this.parent.index.Contains(path, StringComparer.OrdinalIgnoreCase);
 
             public FileAttributes GetAttributes(string path) => throw new NotImplementedException();
 
@@ -369,7 +331,36 @@ namespace Codec.Archives
 
             public FileSystemStream Open(string path, FileStreamOptions options) => throw new NotImplementedException();
 
-            public FileSystemStream OpenRead(string path) => new StreamWrapper(this.parent.GetStreamSpan(path), path, isAsync: false);
+            public FileSystemStream OpenRead(string path)
+            {
+                if (!this.Exists(path))
+                {
+                    throw new FileNotFoundException();
+                }
+
+                using var stream = this.parent.fileSystem.File.OpenRead(this.parent.filePath);
+                var psb = PsbDecode(stream);
+                var root = psb.Root;
+                MemoryStream memoryStream;
+                if (path == this.parent.IndexFileName)
+                {
+                    memoryStream = new MemoryStream();
+                    using var sw = new StreamWriter(memoryStream, leaveOpen: true) { AutoFlush = true };
+                    using var jw = new JsonTextWriter(sw) { CloseOutput = false, Formatting = Formatting.Indented };
+                    root.WriteTo(jw);
+                }
+                else
+                {
+                    var id = uint.Parse(Regex.Match(path, "^_stream\\.(\\d+)$").Groups[1].Value, CultureInfo.InvariantCulture);
+                    memoryStream = new MemoryStream(psb.StreamCache[id].BinaryData);
+                }
+
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                return new StreamWrapper(
+                    memoryStream,
+                    path,
+                    false);
+            }
 
             public StreamReader OpenText(string path) => throw new NotImplementedException();
 
@@ -468,9 +459,9 @@ namespace Codec.Archives
 
         private class PathProvider : IPath
         {
-            private MArchiveV1VirtualFileSystem parent;
+            private PsbVirtualFileSystem parent;
 
-            public PathProvider(MArchiveV1VirtualFileSystem parent)
+            public PathProvider(PsbVirtualFileSystem parent)
             {
                 this.parent = parent;
             }

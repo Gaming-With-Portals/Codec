@@ -25,11 +25,12 @@ namespace Codec.Archives
 
         public MVirtualFileSystem(string filePath, string seed, int keyLength, IFileSystem? fileSystem = null)
         {
+            fileSystem ??= new FileSystem();
             this.filePath = filePath;
             this.seed = seed;
             this.keyLength = keyLength;
-            this.fileSystem = fileSystem ?? new FileSystem();
-            this.FileName = this.fileSystem.Path.GetFileNameWithoutExtension(this.filePath);
+            this.fileSystem = fileSystem;
+            this.FileName = fileSystem.Path.GetFileNameWithoutExtension(filePath);
 
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);

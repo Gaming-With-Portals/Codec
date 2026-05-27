@@ -73,6 +73,7 @@ namespace Codec.UI
             Path.GetExtension(entry.Path).ToUpperInvariant() switch
             {
                 ".BMP" => FileType.Image,
+                ".CTXR" => FileType.Image,
                 ".GIF" => FileType.Image,
                 ".TIF" => FileType.Image,
                 ".TIFF" => FileType.Image,

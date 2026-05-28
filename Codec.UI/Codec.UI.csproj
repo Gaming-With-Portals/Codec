@@ -28,4 +28,5 @@
     <None Remove="stylecop.json" />
     <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
+  <Import Project="PublishApp.targets" />
 </Project>

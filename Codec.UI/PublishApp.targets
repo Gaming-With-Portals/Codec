@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>$(SelfContained)</EnableCompressionInSingleFile>
+  </PropertyGroup>
+  <Target Name="ExcludePdbFromPublish" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="RenamePublishExe" AfterTargets="Publish">
+    <Move SourceFiles="$(PublishDir)$(AssemblyName).exe" DestinationFiles="$(PublishDir)codec.exe" />
+  </Target>
+</Project>

@@ -250,5 +250,7 @@ namespace Codec
 
             return true;
         }
+
+        public static bool EndsWithSlash(string? path) => path != null && path.Length > 0 && path.LastIndexOfAny(Separators) == path.Length - 1;
     }
 }

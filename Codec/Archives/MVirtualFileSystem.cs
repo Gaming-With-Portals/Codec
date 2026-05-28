@@ -4,20 +4,21 @@ namespace Codec.Archives
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
+    using System.Diagnostics;
     using System.IO;
     using System.IO.Abstractions;
     using System.Linq;
     using GMWare.M2.MArchive;
     using Microsoft.Extensions.DependencyInjection;
 
-    public sealed class MVirtualFileSystem : FileSystemBase
+    public sealed class MVirtualFileSystem : IndexedFileSystem<string>
     {
         private static readonly Dictionary<uint, IMArchiveCodec> CodecLookup = new IMArchiveCodec[] { new ZStandardCodec(), new ZlibCodec(), new FastLzCodec(), }.ToDictionary(c => c.Magic);
         private readonly string filePath;
         private readonly string seed;
         private readonly int keyLength;
         private readonly IFileSystem fileSystem;
+        private readonly string fileName;
 
         public MVirtualFileSystem(string filePath, string seed, int keyLength, IFileSystem? fileSystem = null)
         {
@@ -26,10 +27,7 @@ namespace Codec.Archives
             this.seed = seed;
             this.keyLength = keyLength;
             this.fileSystem = fileSystem;
-            this.FileName = fileSystem.Path.GetFileNameWithoutExtension(filePath);
-
-            this.Directory = new DirectoryProvider(this);
-            this.File = new FileProvider(this);
+            this.fileName = fileSystem.Path.GetFileNameWithoutExtension(filePath);
         }
 
         public static void Register(IServiceCollection services)
@@ -46,8 +44,6 @@ namespace Codec.Archives
             });
         }
 
-        public string FileName { get; }
-
         internal static Stream? ReadMArchive(FileSystemStream fs, string seed, int keyLength, out int decompressedLength)
         {
             var br = new BinaryReader(fs);
@@ -63,39 +59,14 @@ namespace Codec.Archives
             return codec.GetDecompressionStream(cs, decompressedLength);
         }
 
-        private class DirectoryProvider(MVirtualFileSystem parent) : DirectoryBase(parent)
+        protected override string[] ReadIndex() => [this.fileName];
+
+        protected override string GetEntryName(string entry) => entry;
+
+        protected override Stream OpenRead(string entry)
         {
-            protected override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, bool files = false, bool directories = false)
-            {
-                if (path != string.Empty)
-                {
-                    throw new DirectoryNotFoundException();
-                }
-
-                var glob = PathExtensions.GlobToRegex(searchPattern);
-                if (files && glob.IsMatch(parent.FileName))
-                {
-                    yield return parent.FileName;
-                }
-            }
-        }
-
-        private class FileProvider(MVirtualFileSystem parent) : FileBase(parent)
-        {
-            public override bool Exists([NotNullWhen(true)] string? path) => string.Equals(path, parent.FileName, StringComparison.OrdinalIgnoreCase);
-
-            public override FileSystemStream OpenRead(string path)
-            {
-                if (!this.Exists(path))
-                {
-                    throw new FileNotFoundException();
-                }
-
-                return new StreamWrapper(
-                    ReadMArchive(parent.fileSystem.File.OpenRead(parent.filePath), parent.seed, parent.keyLength, out _) ?? throw new InvalidDataException("Not a valid M archive."),
-                    path,
-                    false);
-            }
+            Debug.Assert(entry == this.fileName, "Entry does not match the file name.");
+            return ReadMArchive(this.fileSystem.File.OpenRead(this.filePath), this.seed, this.keyLength, out _) ?? throw new InvalidDataException("Not a valid M archive.");
         }
     }
 }

@@ -2,28 +2,15 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
-    using System.IO.Abstractions;
-    using System.Linq;
     using System.Text;
     using Microsoft.Extensions.DependencyInjection;
     using Entry = (string FolderName, string FileName, long Offset, long Length);
 
-    internal class BrfDatVirtualFileSystem : FileSystemBase
+    internal class BrfDatVirtualFileSystem(Stream sourceStream) : IndexedFileSystem<Entry>
     {
-        private readonly Entry[] index;
-        private Stream sourceStream;
-
-        public BrfDatVirtualFileSystem(Stream sourceStream)
-        {
-            this.index = [.. ReadIndex(sourceStream)];
-            this.sourceStream = sourceStream;
-
-            this.Directory = new DirectoryProvider(this);
-            this.File = new FileProvider(this);
-        }
+        private Stream sourceStream = sourceStream;
 
         public static void Register(IServiceCollection services)
         {
@@ -41,6 +28,21 @@
                 return null;
             });
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.sourceStream?.Dispose();
+            this.sourceStream = null!;
+        }
+
+        protected override IEnumerable<Entry> ReadIndex() =>
+            ReadIndex(this.sourceStream);
+
+        protected override string GetEntryName(Entry entry) =>
+            this.Path.Combine(entry.FolderName, entry.FileName);
+
+        protected override Stream OpenRead(Entry entry) =>
+            new OffsetStreamSpan(this.sourceStream, entry.Offset, entry.Length);
 
         private static void Align(Stream stream, long alignment)
         {
@@ -123,7 +125,7 @@
             }
         }
 
-        public static void SeekPastPCX(BinaryReader br)
+        private static void SeekPastPCX(BinaryReader br)
         {
             var s = br.BaseStream;
 
@@ -232,97 +234,6 @@
             }
 
             return value.ToString();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            this.sourceStream?.Dispose();
-            this.sourceStream = null!;
-        }
-
-        private (long Offset, long Length)? GetStreamSpanRange(string path)
-        {
-            var parts = path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 2)
-            {
-                var entry = this.index.FirstOrDefault(e => e.FolderName == parts[0] && e.FileName == parts[1]);
-                if (entry != default)
-                {
-                    return (entry.Offset, entry.Length);
-                }
-            }
-
-            return null;
-        }
-
-        private Stream GetStreamSpan(string path)
-        {
-            if (this.GetStreamSpanRange(path) is (long offset, long size))
-            {
-                return new OffsetStreamSpan(this.sourceStream, offset, size);
-            }
-
-            throw new FileNotFoundException(new FileNotFoundException().Message, path);
-        }
-
-        private class DirectoryProvider(BrfDatVirtualFileSystem parent) : DirectoryBase(parent)
-        {
-            public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption) =>
-                this.EnumerateDirectories(path, searchPattern, searchOption).Concat(this.EnumerateFiles(path, searchPattern, searchOption));
-
-            public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption)
-            {
-                var parts = path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 1)
-                {
-                    throw new DirectoryNotFoundException(path);
-                }
-
-                if (parts.Length == 0)
-                {
-                    return parent.index.Select(e => e.FolderName).Distinct();
-                }
-                else
-                {
-                    if (!parent.index.Any(e => e.FolderName == path))
-                    {
-                        throw new DirectoryNotFoundException(path);
-                    }
-
-                    return [];
-                }
-            }
-
-            public override IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption)
-            {
-                var parts = path.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 1)
-                {
-                    throw new DirectoryNotFoundException(path);
-                }
-
-                if (parts.Length == 0)
-                {
-                    return [];
-                }
-                else
-                {
-                    var files = parent.index.Where(e => e.FolderName == path);
-                    if (!files.Any())
-                    {
-                        throw new DirectoryNotFoundException(path);
-                    }
-
-                    return files.Select(e => e.FolderName + "/" + e.FileName);
-                }
-            }
-        }
-
-        private class FileProvider(BrfDatVirtualFileSystem parent) : FileBase(parent)
-        {
-            public override bool Exists([NotNullWhen(true)] string? path) => parent.GetStreamSpanRange(path) is not null;
-
-            public override FileSystemStream OpenRead(string path) => new StreamWrapper(parent.GetStreamSpan(path), path, isAsync: false);
         }
     }
 }

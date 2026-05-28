@@ -95,11 +95,15 @@ namespace Codec
 
         public static string[] Split(string path) => SegmentSplitRegex().Split(path);
 
-        internal static string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
+        public static bool IsPathRooted(ReadOnlySpan<char> path) => System.IO.Path.IsPathRooted(path);
 
-        internal static string? GetFileNameWithoutExtension(string? path) => System.IO.Path.GetFileNameWithoutExtension(path);
+        public static bool IsPathRooted(string? path) => System.IO.Path.IsPathRooted(path);
 
-        [return: NotNullIfNotNull("path")]
+        public static string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
+
+        public static string? GetFileNameWithoutExtension(string? path) => System.IO.Path.GetFileNameWithoutExtension(path);
+
+        [return: NotNullIfNotNull(nameof(path))]
         public static string? GetPathRoot(string? path)
         {
             if (path == null)
@@ -121,7 +125,7 @@ namespace Codec
             return path[i - 1] == ':' ? path[..(i + 1)] : string.Empty;
         }
 
-        [return: NotNullIfNotNull("path")]
+        [return: NotNullIfNotNull(nameof(path))]
         public static string? GetDirectoryName(string? path)
         {
             if (path == null)
@@ -143,7 +147,7 @@ namespace Codec
             return path[..i];
         }
 
-        [return: NotNullIfNotNull("path")]
+        [return: NotNullIfNotNull(nameof(path))]
         public static string? GetFileName(string? path)
         {
             if (path == null)
@@ -155,7 +159,7 @@ namespace Codec
             return i >= 0 ? path[(i + 1)..] : path.Length > 0 && path[^1] == ':' ? string.Empty : path;
         }
 
-        [return: NotNullIfNotNull("path")]
+        [return: NotNullIfNotNull(nameof(path))]
         public static string? ChangeExtension(string? path, string? extension)
         {
             return System.IO.Path.ChangeExtension(path, extension);

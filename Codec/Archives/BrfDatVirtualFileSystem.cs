@@ -731,9 +731,9 @@
 
             public bool IsPathFullyQualified(string path) => throw new NotImplementedException();
 
-            public bool IsPathRooted(ReadOnlySpan<char> path) => System.IO.Path.IsPathRooted(path);
+            public bool IsPathRooted(ReadOnlySpan<char> path) => PathExtensions.IsPathRooted(path);
 
-            public bool IsPathRooted([NotNullWhen(true)] string? path) => System.IO.Path.IsPathRooted(path);
+            public bool IsPathRooted([NotNullWhen(true)] string? path) => PathExtensions.IsPathRooted(path);
 
             public string Join(ReadOnlySpan<char> path1, ReadOnlySpan<char> path2) => throw new NotImplementedException();
 

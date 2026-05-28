@@ -1,6 +1,5 @@
 ﻿namespace Codec.Files
 {
-    using System;
     using System.Drawing;
     using ImageMagick;
     using Microsoft.Extensions.DependencyInjection;

@@ -2,11 +2,8 @@
 
 namespace Codec
 {
-    using System;
     using System.CommandLine;
     using System.CommandLine.Invocation;
-    using System.IO;
-    using System.IO.Abstractions;
     using System.Linq;
     using Codec.Archives;
     using DiscUtils.Complete;

@@ -8,7 +8,6 @@ namespace Codec.Files
     using System.Drawing.Imaging;
     using System.IO;
     using System.Runtime.InteropServices;
-    using System.Threading.Tasks;
     using Microsoft.Extensions.DependencyInjection;
 
     internal class CtxrFile

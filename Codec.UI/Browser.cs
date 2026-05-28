@@ -269,7 +269,7 @@ namespace Codec.UI
             if (this.entryList.SelectedItems.Count == 1)
             {
                 var entry = (Entry)this.entryList.SelectedItems[0]?.Tag!;
-                if (!this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
+                if (!this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var fsPath))
                 {
                     return;
                 }
@@ -299,10 +299,10 @@ namespace Codec.UI
                 {
                     using var input = fs.File.OpenRead(subPath);
                     var path = this.saveSelectedDialog.FileName;
-                    if (Path.GetExtension(path) != Path.GetExtension(subPath))
+                    var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
+                    if (Path.GetExtension(path) != Path.GetExtension(subPath) && resolver != null)
                     {
-                        using var image = new MagickImage(input);
-                        image.Write(path);
+                        resolver(entry.Path, subPath, fs, fsPath).Save(path);
                     }
                     else
                     {

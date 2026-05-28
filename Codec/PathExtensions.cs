@@ -99,9 +99,19 @@ namespace Codec
 
         public static bool IsPathRooted(string? path) => System.IO.Path.IsPathRooted(path);
 
+        public static ReadOnlySpan<char> GetExtension(ReadOnlySpan<char> path) => System.IO.Path.GetExtension(path);
+
         public static string? GetExtension(string? path) => System.IO.Path.GetExtension(path);
 
+        public static ReadOnlySpan<char> GetFileNameWithoutExtension(ReadOnlySpan<char> path) => System.IO.Path.GetFileNameWithoutExtension(path);
+
         public static string? GetFileNameWithoutExtension(string? path) => System.IO.Path.GetFileNameWithoutExtension(path);
+
+        internal static ReadOnlySpan<char> GetPathRoot(ReadOnlySpan<char> path)
+        {
+            // TODO:
+            throw new NotImplementedException();
+        }
 
         [return: NotNullIfNotNull(nameof(path))]
         public static string? GetPathRoot(string? path)
@@ -125,6 +135,12 @@ namespace Codec
             return path[i - 1] == ':' ? path[..(i + 1)] : string.Empty;
         }
 
+        public static ReadOnlySpan<char> GetDirectoryName(ReadOnlySpan<char> path)
+        {
+            // TODO:
+            throw new NotImplementedException();
+        }
+
         [return: NotNullIfNotNull(nameof(path))]
         public static string? GetDirectoryName(string? path)
         {
@@ -145,6 +161,12 @@ namespace Codec
             }
 
             return path[..i];
+        }
+
+        public static ReadOnlySpan<char> GetFileName(ReadOnlySpan<char> path)
+        {
+            // TODO:
+            throw new NotImplementedException();
         }
 
         [return: NotNullIfNotNull(nameof(path))]

@@ -10,6 +10,9 @@
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/otac0n/Codec</PackageProjectUrl>
   </PropertyGroup>
+  <PropertyGroup>
+    <WarningsAsErrors>CS0114</WarningsAsErrors>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DiscUtils" Version="0.16.13" />
     <PackageReference Include="GMWare.M2" Version="1.1.3" />

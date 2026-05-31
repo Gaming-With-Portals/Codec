@@ -31,6 +31,22 @@
 
         private class IndexedDirectoryBase(IndexedFileSystem<TEntry> parent) : DirectoryBase(parent)
         {
+            public override bool Exists([NotNullWhen(true)] string? path)
+            {
+                if (path is null)
+                {
+                    return false;
+                }
+
+                var prefix = parent.CanonicalizePath(path);
+                if (prefix != string.Empty)
+                {
+                    prefix += parent.Path.DirectorySeparatorChar;
+                }
+
+                return parent.Index.Keys.Any(key => key.StartsWith(prefix, parent.comparison));
+            }
+
             protected override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption, bool files = false, bool directories = false)
             {
                 var prefix = parent.CanonicalizePath(path);

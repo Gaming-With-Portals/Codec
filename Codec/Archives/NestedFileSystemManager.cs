@@ -35,11 +35,14 @@
                 parentRelativePath = parent.Path.Combine(relativePath, directoryName == string.Empty ? path : parent.Path.GetRelativePath(directoryName, path));
                 if (this.GetOrAddFactory(path, parentRelativePath, parent, parentPath, out var factory))
                 {
-                    parent = factory(path, parentRelativePath, parent, parentPath);
-                    this.fileSystems.Add(path, parent);
-                    this.nestedFactories.Remove(path);
-                    parentPath = path;
-                    parentRelativePath = string.Empty;
+                    if (parent.File.Exists(parentRelativePath))
+                    {
+                        parent = factory(path, parentRelativePath, parent, parentPath);
+                        this.fileSystems.Add(path, parent);
+                        this.nestedFactories.Remove(path);
+                        parentPath = path;
+                        parentRelativePath = string.Empty;
+                    }
                 }
 
                 return true;
@@ -108,15 +111,18 @@
         {
             if (this.TryFindParentFileSystem(path, out var parentRelativePath, out var parent, out var parentPath))
             {
-                foreach (var d in parent.Directory.EnumerateDirectories(parentRelativePath))
+                if (string.IsNullOrEmpty(parentRelativePath) || parent.Directory.Exists(parentRelativePath))
                 {
-                    yield return new(parent.Path.CombineIgnoringAbsolute(parentPath, d), false, true);
-                }
+                    foreach (var d in parent.Directory.EnumerateDirectories(parentRelativePath))
+                    {
+                        yield return new(parent.Path.CombineIgnoringAbsolute(parentPath, d), false, true);
+                    }
 
-                foreach (var f in parent.Directory.EnumerateFiles(parentRelativePath))
-                {
-                    var p = parent.Path.CombineIgnoringAbsolute(parentPath, f);
-                    yield return new(p, true, this.IsNestedFileSystem(p, f, parent, parentPath));
+                    foreach (var f in parent.Directory.EnumerateFiles(parentRelativePath))
+                    {
+                        var p = parent.Path.CombineIgnoringAbsolute(parentPath, f);
+                        yield return new(p, true, this.IsNestedFileSystem(p, f, parent, parentPath));
+                    }
                 }
             }
         }

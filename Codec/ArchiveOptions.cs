@@ -4,9 +4,6 @@ namespace Codec
 {
     using System.CommandLine;
     using System.CommandLine.Invocation;
-    using System.Linq;
-    using Codec.Archives;
-    using DiscUtils.Complete;
     using Microsoft.Extensions.DependencyInjection;
 
     public class ArchiveOptions
@@ -33,14 +30,6 @@ namespace Codec
             };
 
             services.AddSingleton(options);
-
-            SetupHelper.SetupComplete();
-
-            services.AddSingleton(s =>
-            {
-                var handlers = s.GetServices<FileSystemResolver>().Select(r => new FileSystemHandler((a, b, c, d) => r(s, a, b, c, d))).ToArray();
-                return new NestedFileSystemManager(new RootEnumerableFileSystem(), handlers);
-            });
         }
     }
 }

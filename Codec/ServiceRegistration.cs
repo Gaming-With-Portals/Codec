@@ -3,9 +3,11 @@
 namespace Codec
 {
     using System;
+    using System.Linq;
     using Codec.Archives;
     using Codec.Files;
     using DiscUtils.Iso9660;
+    using DiscUtils.Complete;
     using Microsoft.Extensions.DependencyInjection;
 
     public class ServiceRegistration
@@ -39,6 +41,14 @@ namespace Codec
 
                 return null;
             });
+
+            services.AddSingleton(s =>
+            {
+                var handlers = s.GetServices<FileSystemResolver>().Select(r => new FileSystemHandler((a, b, c, d) => r(s, a, b, c, d))).ToArray();
+                return new NestedFileSystemManager(new RootEnumerableFileSystem(), handlers);
+            });
+
+            SetupHelper.SetupComplete();
         }
     }
 }

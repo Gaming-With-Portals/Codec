@@ -77,6 +77,7 @@ namespace Codec.UI
                 ".GIF" => FileType.Image,
                 ".TIF" => FileType.Image,
                 ".TIFF" => FileType.Image,
+                ".TM2" => FileType.Image,
                 ".PCX" => FileType.Image,
                 ".PNG" => FileType.Image,
                 ".JPG" => FileType.Image,

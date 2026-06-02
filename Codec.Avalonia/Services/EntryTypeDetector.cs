@@ -24,6 +24,7 @@
                 ".CTXR" or
                 ".GIF" or
                 ".TIF" or ".TIFF" or
+                ".TM2" or
                 ".PCX" or
                 ".PNG" or
                 ".JPG" or ".JPEG" or

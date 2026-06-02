@@ -78,8 +78,7 @@ namespace Codec.Files
             }
 
             protected override string GetEntryName(uint entry) =>
-                // HACK: Pretend each sub file is a .bmp
-                entry.ToString("x4") + ".bmp";
+                entry.ToString("x4") + ".tm2";
 
             protected override Stream OpenRead(uint entry) =>
                 // HACK: Each sub-file loads the whole file using the filename to locate the entry.

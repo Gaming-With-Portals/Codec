@@ -1,0 +1,110 @@
+﻿namespace Codec.Services
+{
+    using System;
+    using System.ComponentModel;
+    using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using NAudio.Wave;
+
+    public sealed class AudioPlayer : IDisposable, INotifyPropertyChanged
+    {
+        private readonly long start;
+        private WaveOutEvent? waveOut;
+        private WaveStream? reader;
+        private Timer? timer;
+        private TaskCompletionSource<bool>? tcs;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public TimeSpan CurrentTime => this.reader?.CurrentTime ?? TimeSpan.Zero;
+
+        public TimeSpan TotalTime => this.reader?.TotalTime ?? TimeSpan.FromTicks(1);
+
+        public bool Playing => this.waveOut?.PlaybackState == PlaybackState.Playing;
+
+        public AudioPlayer(Stream stream, bool ownsStream = true)
+        {
+            using var reader = new StreamMediaFoundationReader(stream);
+
+            var ms = new MemoryStream();
+            WaveFileWriter.WriteWavFileToStream(ms, reader);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            if (ownsStream)
+            {
+                stream.Dispose();
+            }
+
+            this.reader = new WaveFileReader(ms);
+            this.waveOut = new WaveOutEvent();
+            this.waveOut.Init(this.reader);
+            this.start = this.reader.Position;
+            this.waveOut.PlaybackStopped += this.WaveOut_PlaybackStopped;
+        }
+
+        public Task<bool> PlayAsync()
+        {
+            this.waveOut?.Play();
+            this.FinalTick(false);
+            var tcs = new TaskCompletionSource<bool>();
+            this.timer = new Timer(this.Timer_Tick, null, TimeSpan.FromSeconds(0.2), TimeSpan.FromSeconds(0.2));
+            this.tcs = tcs;
+            return tcs.Task;
+        }
+
+        public static async Task<bool> PlayAsync(Stream mediaStream)
+        {
+            using var audio = new AudioPlayer(mediaStream);
+            return await audio.PlayAsync().ConfigureAwait(false);
+        }
+
+        public void Play()
+        {
+            _ = this.PlayAsync();
+        }
+
+        public void Pause()
+        {
+            this.waveOut?.Pause();
+            this.FinalTick(false);
+        }
+
+        public void Stop()
+        {
+            this.tcs?.TrySetResult(false);
+            this.tcs = null;
+            this.waveOut?.Stop();
+        }
+
+        public void Dispose()
+        {
+            this.Stop();
+            this.waveOut?.Dispose();
+            this.waveOut = null;
+            this.reader?.Dispose();
+            this.reader = null;
+        }
+
+        private void FinalTick(bool stoppedNormally)
+        {
+            this.tcs?.TrySetResult(stoppedNormally);
+            this.tcs = null;
+            this.timer?.Dispose();
+            this.timer = null;
+            this.PropertyChanged?.Invoke(this, new(nameof(this.Playing)));
+        }
+
+        private void Timer_Tick(object? state = null)
+        {
+            this.PropertyChanged?.Invoke(this, new(nameof(this.CurrentTime)));
+        }
+
+        private void WaveOut_PlaybackStopped(object? sender, StoppedEventArgs e)
+        {
+            this.reader?.Position = this.start;
+            this.Timer_Tick();
+            this.FinalTick(true);
+        }
+    }
+}

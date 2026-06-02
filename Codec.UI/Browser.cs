@@ -8,7 +8,6 @@ namespace Codec.UI
     using System.Drawing.Drawing2D;
     using System.IO;
     using System.Linq;
-    using System.Media;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using Codec.Archives;
@@ -16,7 +15,6 @@ namespace Codec.UI
     using Codec.Services;
     using ImageMagick;
     using Microsoft.Extensions.DependencyInjection;
-    using NAudio.Wave;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
     using FileType = Codec.Services.EntryTypeDetector.EntryType;
 
@@ -27,7 +25,7 @@ namespace Codec.UI
         private readonly NestedFileSystemManager fsm;
         private readonly List<FileHandlerResolver<Bitmap>> imageResolvers;
         private readonly VirtualImageList<Entry> textureDisplay;
-        private readonly SoundPlayer soundPlayer;
+        private AudioPlayer audioPlayer;
         private bool suppressUpdates;
 
         public Browser(IServiceProvider serviceProvider)
@@ -53,7 +51,6 @@ namespace Codec.UI
                 Visible = false,
             };
             this.splitContainer.Panel2.Controls.Add(this.textureDisplay);
-            this.soundPlayer = new SoundPlayer();
 
             this.fileTree.Nodes.Add(new TreeNode("root", 0, 0, [this.CreateExpanderDummy()]) { Tag = this.fsm.RootEntry });
             this.Navigate(Path.Combine(serviceProvider.GetRequiredService<EnvironmentOptions>().SteamApps, WellKnownPaths.AllDataBin, WellKnownPaths.CD1Path, WellKnownPaths.StageDirPath));
@@ -142,7 +139,7 @@ namespace Codec.UI
             }
         }
 
-        private void EntryList_ItemActivate(object sender, EventArgs e)
+        private async void EntryList_ItemActivate(object sender, EventArgs e)
         {
             var item = this.entryList.SelectedItems.OfType<ListViewItem>().FirstOrDefault();
             if (item?.Tag is Entry entry)
@@ -174,16 +171,12 @@ namespace Codec.UI
                             break;
                         case FileType.Audio:
                             {
-                                this.soundPlayer.Stop();
+                                this.audioPlayer?.Dispose();
                                 try
                                 {
-                                    using var file = fs.File.OpenRead(subPath);
-                                    using var reader = new StreamMediaFoundationReader(file);
-                                    var memoryStream = new MemoryStream();
-                                    WaveFileWriter.WriteWavFileToStream(memoryStream, reader);
-                                    memoryStream.Seek(0, SeekOrigin.Begin);
-                                    this.soundPlayer.Stream = memoryStream;
-                                    this.soundPlayer.Play();
+                                    using var audioPlayer = new AudioPlayer(fs.File.OpenRead(subPath));
+                                    this.audioPlayer = audioPlayer;
+                                    await audioPlayer.PlayAsync().ConfigureAwait(true);
                                 }
                                 catch (Exception ex)
                                 {

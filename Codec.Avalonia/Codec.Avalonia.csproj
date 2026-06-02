@@ -19,7 +19,6 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
     <PackageReference Include="IconPacks.Avalonia.FontAwesome" Version="2.0.0" />
-    <PackageReference Include="NAudio" Version="2.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Codec\Codec.csproj" />

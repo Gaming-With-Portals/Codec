@@ -31,7 +31,6 @@
                     EnvironmentOptions.Bind(context, services);
                     ArchiveOptions.Bind(context, services);
 
-                    services.AddSingleton<AudioPlayer>();
                     services.AddSingleton<ImageLoader>();
                     services.AddSingleton<FileSaveService>();
                     services.AddTransient<FileTreeViewModel>();

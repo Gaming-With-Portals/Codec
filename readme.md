@@ -31,4 +31,5 @@ OpenSource Info
 | [Solideye](https://github.com/Jayveer/Solideye/tree/master) | | Reference code |
 | [Metal Gear Master Collection](https://store.steampowered.com/app/2131630/METAL_GEAR_SOLID__Master_Collection_Version/) | Non-transferrable | You need your own license to this software, and your license may not cover this usage. |
 | [Digital-7 Font](http://style7.website/font.php?font=digital-7) | Freeware for home use | Frequency display (coming soon) |
+| [Font Awesome Free Icons](https://fontawesome.com/icons) | [CC BY 4.0](https://fontawesome.com/license/free) | Used for UI icons |
 | [Streamline Icons Pack](https://www.streamlineicons.com/) | [License](https://www.notion.so/Free-Pack-License-bec2619f40394856b6eeb6cdbe7d6b7d) | Used for UI icons |

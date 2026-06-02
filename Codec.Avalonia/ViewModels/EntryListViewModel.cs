@@ -10,9 +10,11 @@
     using Codec.Archives;
     using Codec.Avalonia.Models;
     using Codec.Avalonia.Services;
+    using Codec.Services;
     using CommunityToolkit.Mvvm.ComponentModel;
     using CommunityToolkit.Mvvm.Input;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
+    using EntryType = Codec.Services.EntryTypeDetector.EntryType;
 
     public sealed partial class EntryListViewModel : ObservableObject, IDisposable
     {
@@ -72,7 +74,7 @@
             this.Entries = [.. entries.Select(entry =>
             {
                 var name = fs.Path.GetFileName(entry.Path) is { Length: > 0 } n ? n : entry.Path;
-                return new EntryItem(entry, name, this.detector.Detect(fs, entry));
+                return new EntryItem(entry, name, this.detector.Detect(entry));
             })];
         }
 

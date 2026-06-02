@@ -3,8 +3,8 @@
     using System;
     using System.Globalization;
     using global::Avalonia.Data.Converters;
-    using Codec.Avalonia.Models;
     using IconPacks.Avalonia.FontAwesome;
+    using EntryType = Codec.Services.EntryTypeDetector.EntryType;
 
     public sealed class FileIconEntryConverter : IValueConverter
     {

@@ -9,6 +9,7 @@
     using CommunityToolkit.Mvvm.Input;
     using global::Avalonia.Media.Imaging;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
+    using EntryType = Codec.Services.EntryTypeDetector.EntryType;
 
     public partial class BrowserViewModel : ObservableObject
     {

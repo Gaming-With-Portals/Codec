@@ -3,7 +3,7 @@
     using System.Collections.ObjectModel;
     using System.Linq;
     using Codec.Archives;
-    using Codec.Avalonia.Services;
+    using Codec.Services;
     using CommunityToolkit.Mvvm.ComponentModel;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
 

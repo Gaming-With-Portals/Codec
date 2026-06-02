@@ -34,7 +34,6 @@
                     services.AddSingleton<AudioPlayer>();
                     services.AddSingleton<ImageLoader>();
                     services.AddSingleton<FileSaveService>();
-                    services.AddSingleton<EntryTypeDetector>();
                     services.AddTransient<FileTreeViewModel>();
                     services.AddTransient<EntryListViewModel>();
                     services.AddTransient<BrowserViewModel>();

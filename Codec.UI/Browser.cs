@@ -3,24 +3,27 @@
 namespace Codec.UI
 {
     using System;
+    using System.ComponentModel;
     using System.Drawing;
     using System.Drawing.Drawing2D;
     using System.IO;
     using System.Linq;
+    using System.Media;
     using System.Threading.Tasks;
     using System.Windows.Forms;
+    using Codec.Archives;
+    using Codec.Files;
+    using Codec.Services;
     using ImageMagick;
     using Microsoft.Extensions.DependencyInjection;
-    using Codec.Archives;
-    using Entry = Codec.Archives.NestedFileSystemManager.Entry;
-    using System.ComponentModel;
-    using System.Media;
     using NAudio.Wave;
-    using Codec.Files;
+    using Entry = Codec.Archives.NestedFileSystemManager.Entry;
+    using FileType = Codec.Services.EntryTypeDetector.EntryType;
 
     internal partial class Browser : Form
     {
         private readonly IServiceProvider serviceProvider;
+        private readonly EntryTypeDetector detector;
         private readonly NestedFileSystemManager fsm;
         private readonly List<FileHandlerResolver<Bitmap>> imageResolvers;
         private readonly VirtualImageList<Entry> textureDisplay;
@@ -30,6 +33,7 @@ namespace Codec.UI
         public Browser(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
+            this.detector = serviceProvider.GetRequiredService<EntryTypeDetector>();
             this.fsm = serviceProvider.GetRequiredService<NestedFileSystemManager>();
             this.imageResolvers = [.. serviceProvider.GetServices<FileHandlerResolver<Bitmap>>()];
 
@@ -56,45 +60,6 @@ namespace Codec.UI
         }
 
         private TreeNode CreateExpanderDummy() => new("...");
-
-        private enum FileType
-        {
-            Folder = 0,
-            File = 1,
-            Archive = 2,
-            Image = 3,
-            Video = 4,
-            Audio = 5,
-        }
-
-        private static FileType DetectFileType(Entry entry) =>
-            entry.CanEnumerateEntries && !entry.CanOpen ? FileType.Folder :
-            entry.CanEnumerateEntries ? FileType.Archive :
-            Path.GetExtension(entry.Path).ToUpperInvariant() switch
-            {
-                ".BMP" => FileType.Image,
-                ".CTXR" => FileType.Image,
-                ".GIF" => FileType.Image,
-                ".TIF" => FileType.Image,
-                ".TIFF" => FileType.Image,
-                ".TM2" => FileType.Image,
-                ".PCX" => FileType.Image,
-                ".PNG" => FileType.Image,
-                ".JPG" => FileType.Image,
-                ".JPEG" => FileType.Image,
-                ".WEBP" => FileType.Image,
-                ".AVI" => FileType.Video,
-                ".MOV" => FileType.Video,
-                ".MP4" => FileType.Video,
-                ".MKV" => FileType.Video,
-                ".WEBM" => FileType.Video,
-                ".MID" => FileType.Audio,
-                ".MIDI" => FileType.Audio,
-                ".MP3" => FileType.Audio,
-                ".OGG" => FileType.Audio,
-                ".WAV" => FileType.Audio,
-                _ => FileType.File,
-            };
 
         private void Navigate(string path)
         {
@@ -138,13 +103,13 @@ namespace Codec.UI
             {
                 var entries = this.fsm.EnumerateEntries(entry.Path);
                 var items = entries
-                    .Select(e => new ListViewItem(fs.Path.GetFileName(e.Path) switch { "" => e.Path, var x => x }, (int)DetectFileType(e)) { Tag = e })
+                    .Select(e => new ListViewItem(fs.Path.GetFileName(e.Path) switch { "" => e.Path, var x => x }, (int)this.detector.Detect(e)) { Tag = e })
                     .ToArray();
                 this.entryList.Items.Clear();
                 this.EntryList_SelectedIndexChanged(this.entryList, EventArgs.Empty);
                 this.entryList.Items.AddRange(items);
 
-                this.textureDisplay.Items = entries.Where(e => DetectFileType(e) == FileType.Image);
+                this.textureDisplay.Items = entries.Where(e => this.detector.Detect(e) == FileType.Image);
             }
 
             this.suppressUpdates = false;
@@ -188,7 +153,7 @@ namespace Codec.UI
                 }
                 else if (this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var fsPath))
                 {
-                    switch (DetectFileType(entry))
+                    switch (this.detector.Detect(entry))
                     {
                         case FileType.Image:
                             {

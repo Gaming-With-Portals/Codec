@@ -1,12 +1,12 @@
-﻿namespace Codec.Avalonia.Services
+﻿namespace Codec.Services
 {
     using System.IO.Abstractions;
-    using Codec.Avalonia.Models;
+    using Codec.Archives;
     using Entry = Codec.Archives.NestedFileSystemManager.Entry;
 
-    public sealed class EntryTypeDetector
+    public sealed class EntryTypeDetector(NestedFileSystemManager fsm)
     {
-        public EntryType Detect(IFileSystem fs, Entry entry)
+        public EntryType Detect(Entry entry)
         {
             if (entry.CanEnumerateEntries && !entry.CanOpen)
             {
@@ -18,7 +18,14 @@
                 return EntryType.Archive;
             }
 
-            return fs.Path.GetExtension(entry.Path).ToUpperInvariant() switch
+            if (!fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
+            {
+                return default;
+            }
+
+            // TODO: Run through our collection of FileHandlerResolvers here.
+
+            return fs.Path.GetExtension(subPath).ToUpperInvariant() switch
             {
                 ".BMP" or
                 ".CTXR" or
@@ -43,6 +50,16 @@
 
                 _ => EntryType.File,
             };
+        }
+
+        public enum EntryType
+        {
+            Folder = 0,
+            File = 1,
+            Archive = 2,
+            Image = 3,
+            Video = 4,
+            Audio = 5,
         }
     }
 }

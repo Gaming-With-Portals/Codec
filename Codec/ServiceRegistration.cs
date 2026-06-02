@@ -6,8 +6,9 @@ namespace Codec
     using System.Linq;
     using Codec.Archives;
     using Codec.Files;
-    using DiscUtils.Iso9660;
+    using Codec.Services;
     using DiscUtils.Complete;
+    using DiscUtils.Iso9660;
     using Microsoft.Extensions.DependencyInjection;
 
     public class ServiceRegistration
@@ -41,6 +42,7 @@ namespace Codec
 
                 return null;
             });
+            services.AddSingleton<EntryTypeDetector>();
 
             services.AddSingleton(s =>
             {

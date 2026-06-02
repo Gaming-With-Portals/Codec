@@ -152,7 +152,7 @@ namespace Codec.UI
         private void FileTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             if (e.Node?.Tag is Entry entry && e.Node.Nodes is [TreeNode onlyChild] && onlyChild.Text == "..." &&
-                this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var _))
+                this.fsm.TryFindParentFileSystem(entry.Path, out var _, out var fs, out var _))
             {
                 e.Node.Nodes.Clear();
                 var entries = this.fsm.EnumerateEntries(entry.Path).Where(e => e.CanEnumerateEntries);

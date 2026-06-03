@@ -164,7 +164,12 @@ namespace Codec.UI
                                 var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
                                 if (resolver != null)
                                 {
-                                    var childForm = new Form();
+                                    var childForm = new Form
+                                    {
+                                        Text = fs.Path.GetFileName(subPath),
+                                        StartPosition = FormStartPosition.CenterParent,
+                                        FormBorderStyle = FormBorderStyle.SizableToolWindow,
+                                    };
                                     childForm.Controls.Add(new PictureBox
                                     {
                                         Dock = DockStyle.Fill,
@@ -172,7 +177,7 @@ namespace Codec.UI
                                         Image = resolver(entry.Path, subPath, fs, fsPath),
                                         BackColor = Color.Black,
                                     });
-                                    childForm.Show(this);
+                                    this.ShowChild(childForm);
                                 }
                             }
                             break;
@@ -180,8 +185,11 @@ namespace Codec.UI
                             {
                                 try
                                 {
-                                    var childForm = new AudioPreviewForm(fs.File.OpenRead(subPath));
-                                    childForm.Show(this);
+                                    var childForm = new AudioPreviewForm(fs.File.OpenRead(subPath))
+                                    {
+                                        Text = fs.Path.GetFileName(subPath),
+                                    };
+                                    this.ShowChild(childForm);
                                 }
                                 catch (Exception ex)
                                 {
@@ -192,6 +200,20 @@ namespace Codec.UI
                     }
                 }
             }
+        }
+
+        private void ShowChild(Form childForm)
+        {
+            childForm.Owner = this;
+            if (childForm.StartPosition == FormStartPosition.CenterParent)
+            {
+                childForm.StartPosition = FormStartPosition.Manual;
+                var topLeft = this.entryList.PointToScreen(Point.Empty);
+                childForm.Location = new Point(
+                    Math.Max(topLeft.X + (this.entryList.Width - childForm.Width) / 2, 0),
+                    Math.Max(topLeft.Y + (this.entryList.Height - childForm.Height) / 2, 0));
+            }
+            childForm.Show();
         }
 
         private void ListToolStripMenuItem_Click(object sender, EventArgs e)

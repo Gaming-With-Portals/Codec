@@ -21,11 +21,14 @@
             this.DataContext = viewModel;
         }
 
-        private void OnAudioPreviewRequested(object? sender, Stream mediaStream)
+        private void OnAudioPreviewRequested(object? sender, (string FileName, Stream Stream) args)
         {
             try
             {
-                var preview = new AudioPreviewWindow(mediaStream);
+                var preview = new AudioPreviewWindow(args.Stream)
+                {
+                    Title = args.FileName,
+                };
                 preview.Show(this);
             }
             catch (Exception ex)
@@ -34,9 +37,12 @@
             }
         }
 
-        private void OnImagePreviewRequested(object? sender, Bitmap bmp)
+        private void OnImagePreviewRequested(object? sender, (string FileName, Bitmap Bitmap) args)
         {
-            var preview = new ImagePreviewWindow(bmp);
+            var preview = new ImagePreviewWindow(args.Bitmap)
+            {
+                Title = args.FileName,
+            };
             preview.Show(this);
         }
     }

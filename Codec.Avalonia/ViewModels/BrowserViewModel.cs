@@ -100,19 +100,24 @@
             switch (item.EntryType)
             {
                 case EntryType.Audio:
-                    if (this.fsm.TryFindParentFileSystem(item.Entry.Path, out var subPath, out var fs, out var fsPath))
                     {
-                        this.AudioPreviewRequested?.Invoke(this, fs.File.OpenRead(subPath));
+                        if (this.fsm.TryFindParentFileSystem(item.Entry.Path, out var subPath, out var fs, out var fsPath))
+                        {
+                            this.AudioPreviewRequested?.Invoke(this, (fs.Path.GetFileName(item.Entry.Path), fs.File.OpenRead(subPath)));
+                        }
                     }
                     break;
 
                 case EntryType.Image:
                     try
                     {
-                        var bmp = await this.imageLoader.LoadAsync(item.Entry).ConfigureAwait(true);
-                        if (bmp != null)
+                        if (this.fsm.TryFindParentFileSystem(item.Entry.Path, out var subPath, out var fs, out var fsPath))
                         {
-                            this.ImagePreviewRequested?.Invoke(this, bmp);
+                            var bmp = await this.imageLoader.LoadAsync(item.Entry).ConfigureAwait(true);
+                            if (bmp != null)
+                            {
+                                this.ImagePreviewRequested?.Invoke(this, (fs.Path.GetFileName(subPath), bmp));
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -124,8 +129,8 @@
             }
         }
 
-        public event EventHandler<Stream>? AudioPreviewRequested;
+        public event EventHandler<(string FileName, Stream Stream)>? AudioPreviewRequested;
 
-        public event EventHandler<Bitmap>? ImagePreviewRequested;
+        public event EventHandler<(string FileName, Bitmap Bitmap)>? ImagePreviewRequested;
     }
 }

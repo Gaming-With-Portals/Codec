@@ -28,11 +28,6 @@
               ToggleType="Radio"
               IsChecked="{Binding List.CurrentViewMode, Mode=TwoWay, Converter={StaticResource ViewModeConverter}, ConverterParameter={x:Static models:ViewMode.List}}"/>
             <MenuItem
-              Header="Small Icons"
-              GroupName="TopViewMode"
-              ToggleType="Radio"
-              IsChecked="{Binding List.CurrentViewMode, Mode=TwoWay, Converter={StaticResource ViewModeConverter}, ConverterParameter={x:Static models:ViewMode.SmallIcons}}"/>
-            <MenuItem
               Header="Image Preview"
               GroupName="TopViewMode"
               ToggleType="Radio"

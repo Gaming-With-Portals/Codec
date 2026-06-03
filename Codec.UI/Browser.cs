@@ -218,21 +218,9 @@ namespace Codec.UI
 
         private void ListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.entryList.View = View.List;
             this.entryList.Visible = true;
             this.textureDisplay.Visible = false;
             this.listToolStripMenuItem.Checked = true;
-            this.smallIconsToolStripMenuItem.Checked = false;
-            this.imagePreviewToolStripMenuItem.Checked = false;
-        }
-
-        private void SmallIconsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            this.entryList.View = View.SmallIcon;
-            this.entryList.Visible = true;
-            this.textureDisplay.Visible = false;
-            this.listToolStripMenuItem.Checked = false;
-            this.smallIconsToolStripMenuItem.Checked = true;
             this.imagePreviewToolStripMenuItem.Checked = false;
         }
 
@@ -241,7 +229,6 @@ namespace Codec.UI
             this.entryList.Visible = false;
             this.textureDisplay.Visible = true;
             this.listToolStripMenuItem.Checked = false;
-            this.smallIconsToolStripMenuItem.Checked = false;
             this.imagePreviewToolStripMenuItem.Checked = true;
         }
 

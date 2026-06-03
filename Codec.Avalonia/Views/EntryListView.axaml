@@ -17,7 +17,7 @@
       ItemsSource="{Binding Entries}"
       SelectionMode="Multiple"
       SelectedItems="{Binding SelectedEntries}"
-      IsVisible="{Binding CurrentViewMode, Converter={StaticResource ViewModeConverter}, ConverterParameter=NotImagePreview}"
+      IsVisible="{Binding CurrentViewMode, Converter={StaticResource ViewModeConverter}, ConverterParameter={x:Static models:ViewMode.List}}"
       DoubleTapped="ListBox_DoubleTapped">
       <ListBox.KeyBindings>
         <KeyBinding Command="{Binding ActivateSelectedItem}" Gesture="Enter" />

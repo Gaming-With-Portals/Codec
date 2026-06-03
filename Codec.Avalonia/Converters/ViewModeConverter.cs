@@ -17,7 +17,6 @@
             return parameter switch
             {
                 ViewMode mode => current == mode,
-                "NotImagePreview" => current != ViewMode.ImagePreview,
                 _ => false,
             };
         }

@@ -3,7 +3,6 @@
     public enum ViewMode
     {
         List,
-        SmallIcons,
         ImagePreview,
     }
 }

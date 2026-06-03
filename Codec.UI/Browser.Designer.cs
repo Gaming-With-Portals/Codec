@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            var resources = new System.ComponentModel.ComponentResourceManager(typeof(Browser));
             this.pathBox = new TextBox();
             this.splitContainer = new SplitContainer();
             this.fileTree = new TreeView();
@@ -39,7 +38,6 @@
             this.saveButton = new ToolStripButton();
             this.viewDrowDown = new ToolStripDropDownButton();
             this.listToolStripMenuItem = new ToolStripMenuItem();
-            this.smallIconsToolStripMenuItem = new ToolStripMenuItem();
             this.imagePreviewToolStripMenuItem = new ToolStripMenuItem();
             this.lowerStatusStrip = new StatusStrip();
             this.saveSelectedDialog = new SaveFileDialog();
@@ -104,6 +102,7 @@
             // fileTypes
             // 
             this.fileTypes.ColorDepth = ColorDepth.Depth32Bit;
+            this.fileTypes.ImageSize = new Size(16, 16);
             this.fileTypes.TransparentColor = Color.Transparent;
             // 
             // topToolStrip
@@ -130,7 +129,7 @@
             // viewDrowDown
             // 
             this.viewDrowDown.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            this.viewDrowDown.DropDownItems.AddRange(new ToolStripItem[] { this.listToolStripMenuItem, this.smallIconsToolStripMenuItem, this.imagePreviewToolStripMenuItem });
+            this.viewDrowDown.DropDownItems.AddRange(new ToolStripItem[] { this.listToolStripMenuItem, this.imagePreviewToolStripMenuItem });
             this.viewDrowDown.Image = Properties.Resources.FontAwesome_GearSolid_20x20;
             this.viewDrowDown.ImageTransparentColor = Color.Magenta;
             this.viewDrowDown.Name = "viewDrowDown";
@@ -142,21 +141,14 @@
             this.listToolStripMenuItem.Checked = true;
             this.listToolStripMenuItem.CheckState = CheckState.Checked;
             this.listToolStripMenuItem.Name = "listToolStripMenuItem";
-            this.listToolStripMenuItem.Size = new Size(229, 34);
+            this.listToolStripMenuItem.Size = new Size(270, 34);
             this.listToolStripMenuItem.Text = "List";
             this.listToolStripMenuItem.Click += this.ListToolStripMenuItem_Click;
-            // 
-            // smallIconsToolStripMenuItem
-            // 
-            this.smallIconsToolStripMenuItem.Name = "smallIconsToolStripMenuItem";
-            this.smallIconsToolStripMenuItem.Size = new Size(229, 34);
-            this.smallIconsToolStripMenuItem.Text = "Small Icons";
-            this.smallIconsToolStripMenuItem.Click += this.SmallIconsToolStripMenuItem_Click;
             // 
             // imagePreviewToolStripMenuItem
             // 
             this.imagePreviewToolStripMenuItem.Name = "imagePreviewToolStripMenuItem";
-            this.imagePreviewToolStripMenuItem.Size = new Size(229, 34);
+            this.imagePreviewToolStripMenuItem.Size = new Size(270, 34);
             this.imagePreviewToolStripMenuItem.Text = "Image Preview";
             this.imagePreviewToolStripMenuItem.Click += this.ImagePreviewToolStripMenuItem_Click;
             // 
@@ -206,7 +198,6 @@
         private System.Windows.Forms.ToolStrip topToolStrip;
         private System.Windows.Forms.ToolStripDropDownButton viewDrowDown;
         private System.Windows.Forms.ToolStripMenuItem listToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem smallIconsToolStripMenuItem;
         private System.Windows.Forms.StatusStrip lowerStatusStrip;
         private System.Windows.Forms.ToolStripButton saveButton;
         private System.Windows.Forms.SaveFileDialog saveSelectedDialog;

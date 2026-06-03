@@ -234,7 +234,8 @@ namespace Codec.UI
 
         private void EntryList_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.saveButton.Enabled = this.entryList.SelectedItems.Count >= 1 && this.entryList.SelectedItems.Cast<ListViewItem>().All(i => i.Tag is Entry entry && entry.CanOpen);
+            var enabled = this.entryList.SelectedItems.Count >= 1 && this.entryList.SelectedItems.Cast<ListViewItem>().All(i => i.Tag is Entry entry && entry.CanOpen);
+            this.saveAsToolStripMenuItem.Enabled = this.saveButton.Enabled = enabled;
         }
 
         private void SaveButton_Click(object sender, EventArgs e)

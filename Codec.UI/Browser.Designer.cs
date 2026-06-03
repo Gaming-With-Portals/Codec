@@ -33,6 +33,8 @@
             this.splitContainer = new SplitContainer();
             this.fileTree = new TreeView();
             this.entryList = new ListView();
+            this.entryContextMenu = new ContextMenuStrip(this.components);
+            this.saveAsToolStripMenuItem = new ToolStripMenuItem();
             this.fileTypes = new ImageList(this.components);
             this.topToolStrip = new ToolStrip();
             this.saveButton = new ToolStripButton();
@@ -46,6 +48,7 @@
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
+            this.entryContextMenu.SuspendLayout();
             this.topToolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -87,6 +90,7 @@
             // 
             // entryList
             // 
+            this.entryList.ContextMenuStrip = this.entryContextMenu;
             this.entryList.Dock = DockStyle.Fill;
             this.entryList.LargeImageList = this.fileTypes;
             this.entryList.Location = new Point(0, 0);
@@ -98,6 +102,21 @@
             this.entryList.View = View.List;
             this.entryList.ItemActivate += this.EntryList_ItemActivate;
             this.entryList.SelectedIndexChanged += this.EntryList_SelectedIndexChanged;
+            // 
+            // entryContextMenu
+            // 
+            this.entryContextMenu.ImageScalingSize = new Size(24, 24);
+            this.entryContextMenu.Items.AddRange(new ToolStripItem[] { this.saveAsToolStripMenuItem });
+            this.entryContextMenu.Name = "entryContextMenu";
+            this.entryContextMenu.Size = new Size(249, 69);
+            // 
+            // saveAsToolStripMenuItem
+            // 
+            this.saveAsToolStripMenuItem.Image = Properties.Resources.FontAwesome_FloppyDiskSolid_20x20;
+            this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            this.saveAsToolStripMenuItem.Size = new Size(248, 32);
+            this.saveAsToolStripMenuItem.Text = "Save As...";
+            this.saveAsToolStripMenuItem.Click += this.SaveButton_Click;
             // 
             // fileTypes
             // 
@@ -141,14 +160,14 @@
             this.listToolStripMenuItem.Checked = true;
             this.listToolStripMenuItem.CheckState = CheckState.Checked;
             this.listToolStripMenuItem.Name = "listToolStripMenuItem";
-            this.listToolStripMenuItem.Size = new Size(270, 34);
+            this.listToolStripMenuItem.Size = new Size(229, 34);
             this.listToolStripMenuItem.Text = "List";
             this.listToolStripMenuItem.Click += this.ListToolStripMenuItem_Click;
             // 
             // imagePreviewToolStripMenuItem
             // 
             this.imagePreviewToolStripMenuItem.Name = "imagePreviewToolStripMenuItem";
-            this.imagePreviewToolStripMenuItem.Size = new Size(270, 34);
+            this.imagePreviewToolStripMenuItem.Size = new Size(229, 34);
             this.imagePreviewToolStripMenuItem.Text = "Image Preview";
             this.imagePreviewToolStripMenuItem.Click += this.ImagePreviewToolStripMenuItem_Click;
             // 
@@ -183,6 +202,7 @@
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.splitContainer).EndInit();
             this.splitContainer.ResumeLayout(false);
+            this.entryContextMenu.ResumeLayout(false);
             this.topToolStrip.ResumeLayout(false);
             this.topToolStrip.PerformLayout();
             this.ResumeLayout(false);
@@ -203,5 +223,7 @@
         private System.Windows.Forms.SaveFileDialog saveSelectedDialog;
         private System.Windows.Forms.FolderBrowserDialog saveToFolderDialog;
         private System.Windows.Forms.ToolStripMenuItem imagePreviewToolStripMenuItem;
+        private ContextMenuStrip entryContextMenu;
+        private ToolStripMenuItem saveAsToolStripMenuItem;
     }
 }

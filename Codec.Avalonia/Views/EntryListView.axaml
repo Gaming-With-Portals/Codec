@@ -22,6 +22,18 @@
       <ListBox.KeyBindings>
         <KeyBinding Command="{Binding ActivateSelectedItem}" Gesture="Enter" />
       </ListBox.KeyBindings>
+      <ListBox.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Save As..." IsEnabled="{Binding CanSave}" Command="{Binding SaveCommand}" CommandParameter="{Binding $parent[Window]}">
+            <MenuItem.Icon>
+              <iconPacks:PackIconFontAwesome
+                Kind="FloppyDiskSolid"
+                Width="{Binding $parent[TemplatedControl].FontSize}"
+                Height="{Binding $parent[TemplatedControl].FontSize}"/>
+            </MenuItem.Icon>
+          </MenuItem>
+        </ContextMenu>
+      </ListBox.ContextMenu>
       <ListBox.ItemTemplate>
         <DataTemplate DataType="models:EntryItem">
           <StackPanel Orientation="Horizontal" Spacing="4">

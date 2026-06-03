@@ -36,6 +36,14 @@ namespace Codec.UI
             this.imageResolvers = [.. serviceProvider.GetServices<FileHandlerResolver<Bitmap>>()];
 
             this.InitializeComponent();
+            this.fileTypes.Images.AddRange([
+                Properties.Resources.FontAwesome_FolderOpenSolid_20x20,
+                Properties.Resources.FontAwesome_FileSolid_20x20,
+                Properties.Resources.FontAwesome_BoxArchiveSolid_20x20,
+                Properties.Resources.FontAwesome_FileImageSolid_20x20,
+                Properties.Resources.FontAwesome_FileVideoSolid_20x20,
+                Properties.Resources.FontAwesome_FileAudioSolid_20x20,
+            ]);
             this.saveSelectedDialog.InitialDirectory = Environment.ExpandEnvironmentVariables(this.saveSelectedDialog.InitialDirectory);
             this.saveToFolderDialog.InitialDirectory = Environment.ExpandEnvironmentVariables(this.saveToFolderDialog.InitialDirectory);
             this.textureDisplay = new VirtualImageList<Entry>(

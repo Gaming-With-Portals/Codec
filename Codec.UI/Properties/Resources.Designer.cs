@@ -63,9 +63,9 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_audio_file_volume_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_BoxArchiveSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-audio-file-volume@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-BoxArchiveSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -73,9 +73,9 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_cog_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_FileAudioSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-cog@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-FileAudioSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -83,9 +83,9 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_common_file_stack_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_FileImageSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-common-file-stack@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-FileImageSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -93,9 +93,9 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_floppy_disk_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_FileSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-floppy-disk@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-FileSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,9 +103,9 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_folder_empty_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_FileVideoSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-folder-empty@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-FileVideoSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -113,9 +113,9 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_image_file_camera_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_FloppyDiskSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-image-file-camera@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-FloppyDiskSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -123,9 +123,19 @@ namespace Codec.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap streamline_icon_video_file_camera_20x20 {
+        internal static System.Drawing.Bitmap FontAwesome_FolderOpenSolid_20x20 {
             get {
-                object obj = ResourceManager.GetObject("streamline-icon-video-file-camera@20x20", resourceCulture);
+                object obj = ResourceManager.GetObject("FontAwesome-FolderOpenSolid@20x20", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap FontAwesome_GearSolid_20x20 {
+            get {
+                object obj = ResourceManager.GetObject("FontAwesome-GearSolid@20x20", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

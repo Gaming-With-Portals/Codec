@@ -104,14 +104,7 @@
             // fileTypes
             // 
             this.fileTypes.ColorDepth = ColorDepth.Depth32Bit;
-            this.fileTypes.ImageStream = (ImageListStreamer)resources.GetObject("fileTypes.ImageStream");
             this.fileTypes.TransparentColor = Color.Transparent;
-            this.fileTypes.Images.SetKeyName(0, "folder");
-            this.fileTypes.Images.SetKeyName(1, "file");
-            this.fileTypes.Images.SetKeyName(2, "streamline-icon-common-file-stack@20x20.png");
-            this.fileTypes.Images.SetKeyName(3, "streamline-icon-image-file-camera@20x20.png");
-            this.fileTypes.Images.SetKeyName(4, "streamline-icon-video-file-camera@20x20.png");
-            this.fileTypes.Images.SetKeyName(5, "streamline-icon-audio-file-volume@20x20.png");
             // 
             // topToolStrip
             // 
@@ -127,7 +120,7 @@
             // 
             this.saveButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
             this.saveButton.Enabled = false;
-            this.saveButton.Image = Properties.Resources.streamline_icon_floppy_disk_20x20;
+            this.saveButton.Image = Properties.Resources.FontAwesome_FloppyDiskSolid_20x20;
             this.saveButton.ImageTransparentColor = Color.Magenta;
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new Size(34, 28);
@@ -138,7 +131,7 @@
             // 
             this.viewDrowDown.DisplayStyle = ToolStripItemDisplayStyle.Image;
             this.viewDrowDown.DropDownItems.AddRange(new ToolStripItem[] { this.listToolStripMenuItem, this.smallIconsToolStripMenuItem, this.imagePreviewToolStripMenuItem });
-            this.viewDrowDown.Image = Properties.Resources.streamline_icon_cog_20x20;
+            this.viewDrowDown.Image = Properties.Resources.FontAwesome_GearSolid_20x20;
             this.viewDrowDown.ImageTransparentColor = Color.Magenta;
             this.viewDrowDown.Name = "viewDrowDown";
             this.viewDrowDown.Size = new Size(42, 28);

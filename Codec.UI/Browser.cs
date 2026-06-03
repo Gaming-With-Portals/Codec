@@ -25,7 +25,6 @@ namespace Codec.UI
         private readonly NestedFileSystemManager fsm;
         private readonly List<FileHandlerResolver<Bitmap>> imageResolvers;
         private readonly VirtualImageList<Entry> textureDisplay;
-        private AudioPlayer audioPlayer;
         private bool suppressUpdates;
 
         public Browser(IServiceProvider serviceProvider)
@@ -179,12 +178,10 @@ namespace Codec.UI
                             break;
                         case FileType.Audio:
                             {
-                                this.audioPlayer?.Dispose();
                                 try
                                 {
-                                    using var audioPlayer = new AudioPlayer(fs.File.OpenRead(subPath));
-                                    this.audioPlayer = audioPlayer;
-                                    await audioPlayer.PlayAsync().ConfigureAwait(true);
+                                    var childForm = new AudioPreviewForm(fs.File.OpenRead(subPath));
+                                    childForm.Show(this);
                                 }
                                 catch (Exception ex)
                                 {

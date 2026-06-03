@@ -21,14 +21,12 @@
             this.DataContext = viewModel;
         }
 
-        private async void OnAudioPreviewRequested(object? sender, Stream mediaStream)
+        private void OnAudioPreviewRequested(object? sender, Stream mediaStream)
         {
-            this.audioPlayer?.Dispose();
             try
             {
-                using var audioPlayer = new AudioPlayer(mediaStream);
-                this.audioPlayer = audioPlayer;
-                await audioPlayer.PlayAsync().ConfigureAwait(true);
+                var preview = new AudioPreviewWindow(mediaStream);
+                preview.Show(this);
             }
             catch (Exception ex)
             {

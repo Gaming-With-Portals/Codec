@@ -271,6 +271,36 @@ namespace Codec.Archives
             public override IEnumerable<string> EnumerateFileSystemEntries(string path, string searchPattern, SearchOption searchOption) =>
                 this.EnumerateDirectories(path, searchPattern, searchOption).Concat(this.EnumerateFiles(path, searchPattern, searchOption));
 
+            public override bool Exists([NotNullWhen(true)] string? path)
+            {
+                if (path == string.Empty)
+                {
+                    return true;
+                }
+
+                var parts = path?.Split(PathExtensions.Separators, StringSplitOptions.RemoveEmptyEntries);
+                if (parts is null or [])
+                {
+                    return false;
+                }
+
+                var root = parts[0];
+                var ix = Array.FindIndex(parent.index, e => e.name == root);
+                if (ix < 0)
+                {
+                    return false;
+                }
+
+                if (parts.Length == 1)
+                {
+                    return true;
+                }
+
+                var files = parent.GetFileIndex(root);
+                var dir = string.Concat(parts.Skip(1).Select(p => p + "/"));
+                return files.Any(f => f.name.StartsWith(dir));
+            }
+
             public override IEnumerable<string> EnumerateDirectories(string path, string searchPattern, SearchOption searchOption)
             {
                 var glob = PathExtensions.GlobToRegex(searchPattern);

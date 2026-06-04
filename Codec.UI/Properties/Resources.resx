@@ -118,25 +118,40 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="streamline-icon-audio-file-volume@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-audio-file-volume@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-BoxArchiveSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-BoxArchiveSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="streamline-icon-cog@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-cog@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-FileAudioSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-FileAudioSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="streamline-icon-floppy-disk@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-floppy-disk@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-FileImageSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-FileImageSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="streamline-icon-common-file-stack@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-common-file-stack@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-FileSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-FileSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="streamline-icon-video-file-camera@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-video-file-camera@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-FileVideoSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-FileVideoSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="streamline-icon-folder-empty@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-folder-empty@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-FloppyDiskSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-FloppyDiskSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="streamline-icon-image-file-camera@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\streamline-icon-image-file-camera@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="FontAwesome-FolderOpenSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-FolderOpenSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FontAwesome-GearSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-GearSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FontAwesome-PauseSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-PauseSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FontAwesome-PlaySolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-PlaySolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FontAwesome-StopSolid@20x20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FontAwesome-StopSolid@20x20.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Otacon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\..\assets\Otacon.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

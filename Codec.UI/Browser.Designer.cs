@@ -29,17 +29,17 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            var resources = new System.ComponentModel.ComponentResourceManager(typeof(Browser));
             this.pathBox = new TextBox();
             this.splitContainer = new SplitContainer();
             this.fileTree = new TreeView();
             this.entryList = new ListView();
+            this.entryContextMenu = new ContextMenuStrip(this.components);
+            this.saveAsToolStripMenuItem = new ToolStripMenuItem();
             this.fileTypes = new ImageList(this.components);
             this.topToolStrip = new ToolStrip();
             this.saveButton = new ToolStripButton();
             this.viewDrowDown = new ToolStripDropDownButton();
             this.listToolStripMenuItem = new ToolStripMenuItem();
-            this.smallIconsToolStripMenuItem = new ToolStripMenuItem();
             this.imagePreviewToolStripMenuItem = new ToolStripMenuItem();
             this.lowerStatusStrip = new StatusStrip();
             this.saveSelectedDialog = new SaveFileDialog();
@@ -48,6 +48,7 @@
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
+            this.entryContextMenu.SuspendLayout();
             this.topToolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -58,6 +59,7 @@
             this.pathBox.Name = "pathBox";
             this.pathBox.Size = new Size(1203, 31);
             this.pathBox.TabIndex = 0;
+            this.pathBox.KeyPress += this.PathBox_KeyPress;
             this.pathBox.Validating += this.PathBox_Validating;
             // 
             // splitContainer
@@ -89,6 +91,7 @@
             // 
             // entryList
             // 
+            this.entryList.ContextMenuStrip = this.entryContextMenu;
             this.entryList.Dock = DockStyle.Fill;
             this.entryList.LargeImageList = this.fileTypes;
             this.entryList.Location = new Point(0, 0);
@@ -101,17 +104,26 @@
             this.entryList.ItemActivate += this.EntryList_ItemActivate;
             this.entryList.SelectedIndexChanged += this.EntryList_SelectedIndexChanged;
             // 
+            // entryContextMenu
+            // 
+            this.entryContextMenu.ImageScalingSize = new Size(24, 24);
+            this.entryContextMenu.Items.AddRange(new ToolStripItem[] { this.saveAsToolStripMenuItem });
+            this.entryContextMenu.Name = "entryContextMenu";
+            this.entryContextMenu.Size = new Size(167, 36);
+            // 
+            // saveAsToolStripMenuItem
+            // 
+            this.saveAsToolStripMenuItem.Image = Properties.Resources.FontAwesome_FloppyDiskSolid_20x20;
+            this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            this.saveAsToolStripMenuItem.Size = new Size(166, 32);
+            this.saveAsToolStripMenuItem.Text = "Save As...";
+            this.saveAsToolStripMenuItem.Click += this.SaveButton_Click;
+            // 
             // fileTypes
             // 
             this.fileTypes.ColorDepth = ColorDepth.Depth32Bit;
-            this.fileTypes.ImageStream = (ImageListStreamer)resources.GetObject("fileTypes.ImageStream");
+            this.fileTypes.ImageSize = new Size(16, 16);
             this.fileTypes.TransparentColor = Color.Transparent;
-            this.fileTypes.Images.SetKeyName(0, "folder");
-            this.fileTypes.Images.SetKeyName(1, "file");
-            this.fileTypes.Images.SetKeyName(2, "streamline-icon-common-file-stack@20x20.png");
-            this.fileTypes.Images.SetKeyName(3, "streamline-icon-image-file-camera@20x20.png");
-            this.fileTypes.Images.SetKeyName(4, "streamline-icon-video-file-camera@20x20.png");
-            this.fileTypes.Images.SetKeyName(5, "streamline-icon-audio-file-volume@20x20.png");
             // 
             // topToolStrip
             // 
@@ -127,7 +139,7 @@
             // 
             this.saveButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
             this.saveButton.Enabled = false;
-            this.saveButton.Image = Properties.Resources.streamline_icon_floppy_disk_20x20;
+            this.saveButton.Image = Properties.Resources.FontAwesome_FloppyDiskSolid_20x20;
             this.saveButton.ImageTransparentColor = Color.Magenta;
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new Size(34, 28);
@@ -137,8 +149,8 @@
             // viewDrowDown
             // 
             this.viewDrowDown.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            this.viewDrowDown.DropDownItems.AddRange(new ToolStripItem[] { this.listToolStripMenuItem, this.smallIconsToolStripMenuItem, this.imagePreviewToolStripMenuItem });
-            this.viewDrowDown.Image = Properties.Resources.streamline_icon_cog_20x20;
+            this.viewDrowDown.DropDownItems.AddRange(new ToolStripItem[] { this.listToolStripMenuItem, this.imagePreviewToolStripMenuItem });
+            this.viewDrowDown.Image = Properties.Resources.FontAwesome_GearSolid_20x20;
             this.viewDrowDown.ImageTransparentColor = Color.Magenta;
             this.viewDrowDown.Name = "viewDrowDown";
             this.viewDrowDown.Size = new Size(42, 28);
@@ -152,13 +164,6 @@
             this.listToolStripMenuItem.Size = new Size(229, 34);
             this.listToolStripMenuItem.Text = "List";
             this.listToolStripMenuItem.Click += this.ListToolStripMenuItem_Click;
-            // 
-            // smallIconsToolStripMenuItem
-            // 
-            this.smallIconsToolStripMenuItem.Name = "smallIconsToolStripMenuItem";
-            this.smallIconsToolStripMenuItem.Size = new Size(229, 34);
-            this.smallIconsToolStripMenuItem.Text = "Small Icons";
-            this.smallIconsToolStripMenuItem.Click += this.SmallIconsToolStripMenuItem_Click;
             // 
             // imagePreviewToolStripMenuItem
             // 
@@ -194,10 +199,12 @@
             this.Controls.Add(this.pathBox);
             this.Controls.Add(this.topToolStrip);
             this.Name = "Browser";
+            this.Text = "Codec";
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.splitContainer).EndInit();
             this.splitContainer.ResumeLayout(false);
+            this.entryContextMenu.ResumeLayout(false);
             this.topToolStrip.ResumeLayout(false);
             this.topToolStrip.PerformLayout();
             this.ResumeLayout(false);
@@ -213,11 +220,12 @@
         private System.Windows.Forms.ToolStrip topToolStrip;
         private System.Windows.Forms.ToolStripDropDownButton viewDrowDown;
         private System.Windows.Forms.ToolStripMenuItem listToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem smallIconsToolStripMenuItem;
         private System.Windows.Forms.StatusStrip lowerStatusStrip;
         private System.Windows.Forms.ToolStripButton saveButton;
         private System.Windows.Forms.SaveFileDialog saveSelectedDialog;
         private System.Windows.Forms.FolderBrowserDialog saveToFolderDialog;
         private System.Windows.Forms.ToolStripMenuItem imagePreviewToolStripMenuItem;
+        private ContextMenuStrip entryContextMenu;
+        private ToolStripMenuItem saveAsToolStripMenuItem;
     }
 }

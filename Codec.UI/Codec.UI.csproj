@@ -1,15 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>..\assets\Otacon.ico</ApplicationIcon>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.3.0" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Codec\Codec.csproj" />
   </ItemGroup>
@@ -28,5 +26,5 @@
     <None Remove="stylecop.json" />
     <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
-  <Import Project="PublishApp.targets" />
+  <Import Project="..\PublishApp.targets" />
 </Project>

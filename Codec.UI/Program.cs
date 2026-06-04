@@ -5,7 +5,6 @@ namespace Codec.UI
     using System;
     using System.CommandLine;
     using System.CommandLine.Invocation;
-    using System.Threading.Tasks;
     using System.Windows.Forms;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
@@ -15,16 +14,17 @@ namespace Codec.UI
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        public static async Task<int> Main(string[] args)
+        [STAThread]
+        public static int Main(string[] args)
         {
             var rootCommand = new RootCommand();
 
             ArchiveOptions.Attach(rootCommand);
             EnvironmentOptions.Attach(rootCommand);
 
-            var browseCommand1 = new Command("browse", "Browse Files");
-            browseCommand1.AddAlias("browser");
-            rootCommand.Add(browseCommand1);
+            var browseCommand = new Command("browse", "Browse Files");
+            browseCommand.AddAlias("browser");
+            rootCommand.Add(browseCommand);
 
             static void InstallSharedConfiguration(InvocationContext context, IServiceCollection services)
             {
@@ -32,25 +32,24 @@ namespace Codec.UI
                 ServiceRegistration.Register(services);
             }
 
-            browseCommand1.SetHandler(
-                async context =>
+            void Browse(InvocationContext context)
+            {
+                var builder = Host.CreateDefaultBuilder(args);
+                builder.ConfigureServices(services =>
                 {
-                    var builder = Host.CreateDefaultBuilder(args);
-                    builder.ConfigureServices(services =>
-                    {
-                        InstallSharedConfiguration(context, services);
-                        ArchiveOptions.Bind(context, services);
-                    });
-
-                    using var host = builder.Build();
-                    await StaThreadRunner.RunAsync(() =>
-                    {
-                        ApplicationConfiguration.Initialize();
-                        Application.Run(host.Services.GetRequiredService<Browser>());
-                    }).ConfigureAwait(false);
+                    InstallSharedConfiguration(context, services);
+                    ArchiveOptions.Bind(context, services);
                 });
 
-            return await rootCommand.InvokeAsync(args).ConfigureAwait(true);
+                using var host = builder.Build();
+                ApplicationConfiguration.Initialize();
+                Application.Run(host.Services.GetRequiredService<Browser>());
+            }
+
+            browseCommand.SetHandler(Browse);
+            rootCommand.SetHandler(Browse);
+
+            return rootCommand.Invoke(args);
         }
     }
 }

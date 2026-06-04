@@ -13,8 +13,12 @@ namespace Codec.Archives
 
         public OffsetStreamSpan(Stream underlying, long offset, long length)
         {
-            this.underlying = underlying;
-            this.offset = offset;
+            (this.underlying, this.offset) = underlying switch
+            {
+                OffsetStreamSpan span => (span.underlying, span.offset + offset),
+                _ => (underlying, offset),
+            };
+
             this.Length = length;
         }
 

@@ -47,7 +47,7 @@
                 ".MID" or ".MIDI" or
                 ".MP3" or
                 ".OGG" or
-                ".WAV" => EntryType.Audio,
+                ".WAV" or ".XWMA" => EntryType.Audio,
 
                 _ => EntryType.File,
             };

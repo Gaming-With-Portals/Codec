@@ -14,12 +14,21 @@
     using Microsoft.Extensions.DependencyInjection;
     using Newtonsoft.Json;
     using static Codec.Users.GamingWithPortals.MGS2_SDT;
+    using NAudio.Wave;
     using Entry = (string FileName, uint type, Codec.Users.GamingWithPortals.MGS2_SDT.SDTChunk);
 
-    public sealed partial class SdtVirtualFileSystem(Stream sourceStream) : IndexedFileSystem<Entry>
+    public sealed partial class SdtVirtualFileSystem : IndexedFileSystem<Entry>
     {
-        private Stream sourceStream = sourceStream;
         private Dictionary<uint, SDTStream> streamDatas = new Dictionary<uint, SDTStream>();
+        private string parentRelativePath;
+        private IFileSystem parent;
+
+        public SdtVirtualFileSystem(string parentRelativePath, IFileSystem parent)
+        {
+            this.parentRelativePath = parentRelativePath;
+            this.parent = parent;
+        }
+ 
 
         public static void Register(IServiceCollection services)
         {
@@ -29,8 +38,9 @@
                 {
                     return static (fullPath, parentRelativePath, parent, parentPath) =>
                     {
+
                         var file = parent.File.OpenRead(parentRelativePath);
-                        return new SdtVirtualFileSystem(file);
+                        return new SdtVirtualFileSystem(parentRelativePath, parent);
                     };
                 }
 
@@ -40,7 +50,8 @@
 
         protected override IEnumerable<Entry> ReadIndex() {
             var result = new List<Entry>();
-            using var reader = new BinaryReader(this.sourceStream);
+            using var stream = this.parent.File.OpenRead(this.parentRelativePath);
+            using var reader = new BinaryReader(stream);
 
             reader.BaseStream.Seek(0, SeekOrigin.End);
             long fileSize = reader.BaseStream.Position;
@@ -102,16 +113,11 @@
         protected override string GetEntryName(Entry entry) =>
             entry.FileName;
 
-        protected override void Dispose(bool disposing)
-        {
-            this.sourceStream?.Dispose();
-            this.sourceStream = null!;
-        }
 
         protected override Stream OpenRead(Entry entry)
         {
-           
-            BinaryReader reader = new BinaryReader(this.sourceStream);
+            using var stream = this.parent.File.OpenRead(this.parentRelativePath);
+            using var reader = new BinaryReader(stream);
             reader.BaseStream.Seek(0, 0);
 
             var memStream = new MemoryStream();
@@ -125,11 +131,13 @@
 
             if (entry.Item3.streamID == 0x00040001)
             {
+
+
                 FixupXWMAHeader(entry.Item3, memStream);
 
             }
 
-
+            memStream.Seek(0, SeekOrigin.Begin);
             return memStream;
         }
 

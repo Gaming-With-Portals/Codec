@@ -12,6 +12,7 @@ Launch the tool using the key in the [launch settings](Codec.UI/Properties/launc
 |-|-|
 |![MGS1](assets/mgs1.png)|![MGS2](assets/mgs2.png)|
 |![MGS3](assets/mgs3.png)|![MGS4](assets/mgs4.png)|
+|![MG1](assets/mg1.png)|![MGSVR](assets/mgsvr.png)|
 
 OpenSource Info
 ---------------

@@ -31,4 +31,5 @@
       <DependentUpon>AudioPreviewWindow.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
+  <Import Project="..\PublishApp.targets" />
 </Project>

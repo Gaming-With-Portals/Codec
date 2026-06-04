@@ -1,12 +1,18 @@
 <Project>
   <PropertyGroup>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <Configuration Condition="'$(Platform)' == ''">Release</Configuration>
     <SelfContained>false</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>$(SelfContained)</EnableCompressionInSingleFile>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
+    <PublishDir Condition="'$(TargetFrameworks)' == ''">$(RepoRoot)publish\$(MSBuildProjectName)-$(Platform)-$(Configuration)\</PublishDir>
+    <PublishDir Condition="'$(PublishDir)' == ''">$(RepoRoot)publish\$(MSBuildProjectName)-$(Platform)-$(Configuration)\$(TargetFramework)\</PublishDir>
   </PropertyGroup>
   <Target Name="ExcludePdbFromPublish" AfterTargets="ComputeFilesToPublish">
     <ItemGroup>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.Extension)' == '.pdb'" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.Extension)' == '.xml'" />
     </ItemGroup>
   </Target>
   <Target Name="RenamePublishExe" AfterTargets="Publish">

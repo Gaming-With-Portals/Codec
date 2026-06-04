@@ -5,7 +5,6 @@ namespace Codec.UI
     using System;
     using System.CommandLine;
     using System.CommandLine.Invocation;
-    using System.Threading.Tasks;
     using System.Windows.Forms;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
@@ -15,7 +14,8 @@ namespace Codec.UI
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        public static async Task<int> Main(string[] args)
+        [STAThread]
+        public static int Main(string[] args)
         {
             var rootCommand = new RootCommand();
 
@@ -33,7 +33,7 @@ namespace Codec.UI
             }
 
             browseCommand1.SetHandler(
-                async context =>
+                context =>
                 {
                     var builder = Host.CreateDefaultBuilder(args);
                     builder.ConfigureServices(services =>
@@ -43,14 +43,11 @@ namespace Codec.UI
                     });
 
                     using var host = builder.Build();
-                    await StaThreadRunner.RunAsync(() =>
-                    {
-                        ApplicationConfiguration.Initialize();
-                        Application.Run(host.Services.GetRequiredService<Browser>());
-                    }).ConfigureAwait(false);
+                    ApplicationConfiguration.Initialize();
+                    Application.Run(host.Services.GetRequiredService<Browser>());
                 });
 
-            return await rootCommand.InvokeAsync(args).ConfigureAwait(true);
+            return rootCommand.Invoke(args);
         }
     }
 }

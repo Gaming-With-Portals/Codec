@@ -11,7 +11,8 @@
 
     sealed class Program
     {
-        public static async Task<int> Main(string[] args)
+        [STAThread]
+        public static int Main(string[] args)
         {
             var rootCommand = new RootCommand();
 
@@ -42,7 +43,7 @@
                     BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args);
                 });
 
-            return await rootCommand.InvokeAsync(args).ConfigureAwait(true);
+            return rootCommand.Invoke(args);
         }
 
         public static AppBuilder BuildAvaloniaApp(IServiceProvider services)

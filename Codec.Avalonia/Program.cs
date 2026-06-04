@@ -8,6 +8,7 @@
     using Codec.Avalonia.ViewModels;
     using Codec.Avalonia.Views;
     using Microsoft.Extensions.DependencyInjection;
+    using System.CommandLine.Invocation;
 
     sealed class Program
     {
@@ -19,29 +20,31 @@
             ArchiveOptions.Attach(rootCommand);
             EnvironmentOptions.Attach(rootCommand);
 
-            var browseCommand1 = new Command("browse", "Browse Files");
-            browseCommand1.AddAlias("browser");
-            rootCommand.Add(browseCommand1);
+            var browseCommand = new Command("browse", "Browse Files");
+            browseCommand.AddAlias("browser");
+            rootCommand.Add(browseCommand);
 
-            browseCommand1.SetHandler(
-                context =>
-                {
-                    var services = new ServiceCollection();
+            void Browse(InvocationContext context)
+            {
+                var services = new ServiceCollection();
 
-                    ServiceRegistration.Register(services);
-                    EnvironmentOptions.Bind(context, services);
-                    ArchiveOptions.Bind(context, services);
+                ServiceRegistration.Register(services);
+                EnvironmentOptions.Bind(context, services);
+                ArchiveOptions.Bind(context, services);
 
-                    services.AddSingleton<ImageLoader>();
-                    services.AddSingleton<FileSaveService>();
-                    services.AddTransient<FileTreeViewModel>();
-                    services.AddTransient<EntryListViewModel>();
-                    services.AddTransient<BrowserViewModel>();
-                    services.AddTransient<BrowserWindow>();
+                services.AddSingleton<ImageLoader>();
+                services.AddSingleton<FileSaveService>();
+                services.AddTransient<FileTreeViewModel>();
+                services.AddTransient<EntryListViewModel>();
+                services.AddTransient<BrowserViewModel>();
+                services.AddTransient<BrowserWindow>();
 
-                    using var serviceProvider = services.BuildServiceProvider();
-                    BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args);
-                });
+                using var serviceProvider = services.BuildServiceProvider();
+                BuildAvaloniaApp(serviceProvider).StartWithClassicDesktopLifetime(args);
+            }
+
+            browseCommand.SetHandler(Browse);
+            rootCommand.SetHandler(Browse);
 
             return rootCommand.Invoke(args);
         }

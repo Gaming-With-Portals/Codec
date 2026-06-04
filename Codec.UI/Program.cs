@@ -22,9 +22,9 @@ namespace Codec.UI
             ArchiveOptions.Attach(rootCommand);
             EnvironmentOptions.Attach(rootCommand);
 
-            var browseCommand1 = new Command("browse", "Browse Files");
-            browseCommand1.AddAlias("browser");
-            rootCommand.Add(browseCommand1);
+            var browseCommand = new Command("browse", "Browse Files");
+            browseCommand.AddAlias("browser");
+            rootCommand.Add(browseCommand);
 
             static void InstallSharedConfiguration(InvocationContext context, IServiceCollection services)
             {
@@ -32,20 +32,22 @@ namespace Codec.UI
                 ServiceRegistration.Register(services);
             }
 
-            browseCommand1.SetHandler(
-                context =>
+            void Browse(InvocationContext context)
+            {
+                var builder = Host.CreateDefaultBuilder(args);
+                builder.ConfigureServices(services =>
                 {
-                    var builder = Host.CreateDefaultBuilder(args);
-                    builder.ConfigureServices(services =>
-                    {
-                        InstallSharedConfiguration(context, services);
-                        ArchiveOptions.Bind(context, services);
-                    });
-
-                    using var host = builder.Build();
-                    ApplicationConfiguration.Initialize();
-                    Application.Run(host.Services.GetRequiredService<Browser>());
+                    InstallSharedConfiguration(context, services);
+                    ArchiveOptions.Bind(context, services);
                 });
+
+                using var host = builder.Build();
+                ApplicationConfiguration.Initialize();
+                Application.Run(host.Services.GetRequiredService<Browser>());
+            }
+
+            browseCommand.SetHandler(Browse);
+            rootCommand.SetHandler(Browse);
 
             return rootCommand.Invoke(args);
         }

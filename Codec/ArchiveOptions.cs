@@ -10,7 +10,8 @@ namespace Codec
     {
         public static readonly Option<string> KeyOption = new(
             name: "--key",
-            description: "The key to the MGS1 alldata.bin file.")
+            description: "The key to the MGS1 alldata.bin file.",
+            getDefaultValue: () => "25G/xpvTbsb+6")
         {
             IsRequired = true,
         };

@@ -2,34 +2,18 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Globalization;
     using System.IO;
     using System.IO.Abstractions;
     using System.Linq;
-    using System.Text.RegularExpressions;
-    using Codec.Users.GamingWithPortals;
-    using CueSharp;
-    using GMWare.M2.Psb;
+    using System.Runtime.InteropServices;
+    using System.Text;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
-    using Newtonsoft.Json;
-    using static Codec.Users.GamingWithPortals.MGS2_SDT;
-    using NAudio.Wave;
-    using Entry = (string FileName, uint type, Codec.Users.GamingWithPortals.MGS2_SDT.SDTChunk);
+    using Entry = (int Index, SdtVirtualFileSystem.SDTStream Stream, SdtVirtualFileSystem.SDTChunk[] Chunks);
 
-    public sealed partial class SdtVirtualFileSystem : IndexedFileSystem<Entry>
+    public sealed partial class SdtVirtualFileSystem(string parentRelativePath, IFileSystem parent) : IndexedFileSystem<Entry>
     {
-        private Dictionary<uint, SDTStream> streamDatas = new Dictionary<uint, SDTStream>();
-        private string parentRelativePath;
-        private IFileSystem parent;
-
-        public SdtVirtualFileSystem(string parentRelativePath, IFileSystem parent)
-        {
-            this.parentRelativePath = parentRelativePath;
-            this.parent = parent;
-        }
- 
-
         public static void Register(IServiceCollection services)
         {
             services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
@@ -37,111 +21,159 @@
                 if (string.Equals(parent.Path.GetExtension(parentRelativePath), ".sdt", StringComparison.OrdinalIgnoreCase))
                 {
                     return static (fullPath, parentRelativePath, parent, parentPath) =>
-                    {
-
-                        var file = parent.File.OpenRead(parentRelativePath);
-                        return new SdtVirtualFileSystem(parentRelativePath, parent);
-                    };
+                        new SdtVirtualFileSystem(parentRelativePath, parent);
                 }
 
                 return null;
             });
         }
 
-        protected override IEnumerable<Entry> ReadIndex() {
-            var result = new List<Entry>();
-            using var stream = this.parent.File.OpenRead(this.parentRelativePath);
-            using var reader = new BinaryReader(stream);
+        protected override IEnumerable<Entry> ReadIndex()
+        {
+            using var source = parent.File.OpenRead(parentRelativePath);
 
-            reader.BaseStream.Seek(0, SeekOrigin.End);
-            long fileSize = reader.BaseStream.Position;
-            reader.BaseStream.Seek(0, SeekOrigin.Begin);
+            var result = new List<(int Index, SDTStream Stream)>();
+            var chunks = new Dictionary<uint, List<SDTChunk>>();
+            var fileSize = source.Length;
 
-            int index = 0;
-            while (reader.BaseStream.Position < fileSize)
+            var index = 0;
+            while (source.Position < fileSize)
             {
-                long start = reader.BaseStream.Position;
-                SDTChunk chunk = new SDTChunk();
-                chunk.Read(reader);
+                var start = source.Position;
+                var stream = source.ReadLittleEndian<SDTStream>();
 
-                if (chunk.resourceID == 0x10) // Indicate New Resource
+                switch (stream.ResourceId)
                 {
-                    if (SDTExtensionMap.ContainsKey(chunk.streamID))
-                    {
-                        result.Add(new Entry(index.ToString() + SDTExtensionMap[chunk.streamID], chunk.streamID, chunk));
-                    }
-                    else
-                    {
-                        result.Add(new Entry(index.ToString() + ".bin", chunk.streamID, chunk));
-                    }
-                    index++;
+                    case 0x10:
+                        // Indicate New Resource
+                        result.Add(new(index++, stream));
+                        chunks[stream.StreamId] = [];
+                        break;
+                    case 0xF0:
+                        // NO-OP Chunk
+                        continue;
+                    default:
+                        var readSize = stream.Size - 0x10;
+                        var dataSize = readSize;
 
-                    streamDatas[chunk.streamID] = new SDTStream();
-                }
-                else if (chunk.resourceID == 0xF0) // NO-OP Chunk
-                {
-                    continue;
-                }
-                else
-                {
-                    uint readSize = chunk.size - 0x10;
-                    uint dataSize = readSize;
-
-                    if (chunk.resourceID == 0x00040001)
-                    {
-                        if (chunk.streamID != 0)
+                        if (stream.ResourceId == 0x00040001)
                         {
-                            dataSize = chunk.streamID;
+                            if (stream.StreamId != 0)
+                            {
+                                dataSize = stream.StreamId;
+                            }
                         }
 
-                    }
-
-                    streamDatas[chunk.resourceID].positions.Add(start + 0x10);
-                    streamDatas[chunk.resourceID].sizes.Add(dataSize);
+                        chunks[stream.ResourceId].Add(new(start + 0x10, dataSize));
+                        break;
                 }
 
-
-                reader.BaseStream.Seek(start + chunk.size, SeekOrigin.Begin);
+                source.Seek(start + stream.Size, SeekOrigin.Begin);
             }
 
-
-
-
-            return result;
+            return result.Select(r => (r.Index, r.Stream, chunks[r.Stream.StreamId].ToArray()));
         }
 
         protected override string GetEntryName(Entry entry) =>
-            entry.FileName;
-
+            entry.Stream.StreamId.ToString("x8", CultureInfo.InvariantCulture) + (SDTExtensionMap.TryGetValue(entry.Stream.StreamId, out var extension) ? extension : ".bin");
 
         protected override Stream OpenRead(Entry entry)
         {
-            using var stream = this.parent.File.OpenRead(this.parentRelativePath);
-            using var reader = new BinaryReader(stream);
-            reader.BaseStream.Seek(0, 0);
-
-            var memStream = new MemoryStream();
-
             // Demux
-            for (int i = 0; i < streamDatas[entry.Item3.streamID].positions.Count; i++)
+            var baseStream = parent.File.OpenRead(parentRelativePath);
+            Stream stream = new ConcatStream(
+                Ownership.Dispose,
+                [.. entry.Chunks.Select(c => new OffsetStreamSpan(baseStream, c.Position, c.Size, Ownership.Dispose))]);
+
+            if (entry.Stream.StreamId == 0x00040001)
             {
-                reader.BaseStream.Seek(streamDatas[entry.Item3.streamID].positions[i], 0);
-                memStream.Write(reader.ReadBytes((int)streamDatas[entry.Item3.streamID].sizes[i]));
+                stream = PrependXWMAHeader(entry.Stream, stream);
             }
 
-            if (entry.Item3.streamID == 0x00040001)
-            {
-
-
-                FixupXWMAHeader(entry.Item3, memStream);
-
-            }
-
-            memStream.Seek(0, SeekOrigin.Begin);
-            return memStream;
+            return stream;
         }
 
-        [GeneratedRegex("^_stream\\.(\\d+)$")]
-        private static partial Regex StreamIndexExtractor();
+        #region GamingWithPortals "MGS2AudioTool"
+        public static Dictionary<uint, string> SDTExtensionMap = new Dictionary<uint, string>()
+        {
+            { 0x00000001, ".genh" },
+            { 0x00000002, ".dmx" },
+            { 0x00000003, ".nrm" },
+            { 0x00000004, ".pacb" },
+            { 0x00000005, ".dmx" },
+            { 0x00000006, ".bpx" },
+            { 0x0000000c, ".pac" },
+            { 0x0000000d, ".pac" },
+            { 0x0000000e, ".pss" },
+            { 0x0000000f, ".ipu" },
+            { 0x00000020, ".m2v" },
+            { 0x00010001, ".sdx_1" },
+            { 0x00010004, ".sub_en" },
+            { 0x00020001, ".sdx_2" },
+            { 0x00020004, ".sub_fr" },
+            { 0x00030001, ".msf" },
+            { 0x00030004, ".sub_de" },
+            { 0x00040001, ".xwma" },
+            { 0x00040004, ".sub_it" },
+            { 0x00050001, ".9tav" },
+            { 0x00050004, ".sub_es" },
+            { 0x00060004, ".sub_jp" },
+            { 0x00070004, ".sub_jp" },
+            { 0x00100001, ".vag" },
+            { 0x00110001, ".mtaf" },
+        };
+
+        public record struct SDTChunk(long Position, long Size);
+
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        public struct SDTStream
+        {
+            public uint ResourceId;
+            public uint Size;
+            public uint U_8;
+            public uint StreamId;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        struct Header
+        {
+            public uint Magic;
+            public int Codec;
+            public int Channels;
+            public int SampleRate;
+            public uint DataSize;
+            public int AvgBps;
+            public int BlockSize;
+        }
+
+        public static Stream PrependXWMAHeader(SDTStream headerChunk, Stream stream)
+        {
+            var inputHeader = stream.ReadLittleEndian<Header>();
+            stream.Seek(0x32, SeekOrigin.Begin);
+            int seekEntryCount = stream.ReadInt16LittleEndian();
+            var pos = stream.Position + 4 * seekEntryCount;
+            pos = pos % 0x10 == 0 ? pos : pos + 0x10 - (pos % 0x10);
+            var audioData = new OffsetStreamSpan(stream, pos, stream.Length - pos, Ownership.Dispose);
+
+            const int headerSize = 0x2E;
+            var headerStream = new MemoryStream();
+            using var writer = new BinaryWriter(headerStream, Encoding.UTF8, leaveOpen: true);
+            writer.Write(Encoding.ASCII.GetBytes("RIFF"));
+            writer.Write(headerSize + inputHeader.DataSize - 8);
+            writer.Write(Encoding.ASCII.GetBytes("XWMAfmt "));
+            writer.Write(0x12U);
+            writer.Write((short)inputHeader.Codec);
+            writer.Write((short)inputHeader.Channels);
+            writer.Write((uint)inputHeader.SampleRate);
+            writer.Write((uint)inputHeader.AvgBps);
+            writer.Write((short)inputHeader.BlockSize);
+            writer.Write((short)16);
+            writer.Write((short)0);
+            writer.Write(Encoding.ASCII.GetBytes("data"));
+            writer.Write(inputHeader.DataSize);
+
+            return new ConcatStream(Ownership.Dispose, MappedStream.FromStream(headerStream, Ownership.Dispose), audioData);
+        }
+        #endregion
     }
 }

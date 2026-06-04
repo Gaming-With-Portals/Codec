@@ -17,6 +17,7 @@ namespace Codec
     {
         public static void Register(IServiceCollection services)
         {
+            CdaFile.Register(services);
             CtxrFile.Register(services);
             TriFile.Register(services);
             ImageMagickBitmapResolver.Register(services);

@@ -198,6 +198,7 @@
             this.Controls.Add(this.pathBox);
             this.Controls.Add(this.topToolStrip);
             this.Name = "Browser";
+            this.Text = "Codec";
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)this.splitContainer).EndInit();

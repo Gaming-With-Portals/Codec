@@ -8,7 +8,7 @@
   xmlns:views="using:Codec.Avalonia.Views"
   x:Class="Codec.Avalonia.Views.BrowserWindow"
   x:DataType="vm:BrowserViewModel"
-  Icon="/Assets/avalonia-logo.ico"
+  Icon="/Assets/Otacon.ico"
   Title="Codec">
   <Design.DataContext>
     <vm:BrowserViewModel/>

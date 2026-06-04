@@ -35,6 +35,7 @@ namespace Codec.UI
             this.imageResolvers = [.. serviceProvider.GetServices<FileHandlerResolver<Bitmap>>()];
 
             this.InitializeComponent();
+            this.Icon = Properties.Resources.Otacon;
             this.fileTypes.Images.AddRange([
                 Properties.Resources.FontAwesome_FolderOpenSolid_20x20,
                 Properties.Resources.FontAwesome_FileSolid_20x20,

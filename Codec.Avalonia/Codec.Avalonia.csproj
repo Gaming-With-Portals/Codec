@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>..\assets\Otacon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.17" />
@@ -25,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="..\assets\Otacon.ico" Link="Assets\Otacon.ico" />
     <Compile Update="Views\AudioPreviewWindow.axaml.cs">
       <DependentUpon>AudioPreviewWindow.axaml</DependentUpon>
     </Compile>

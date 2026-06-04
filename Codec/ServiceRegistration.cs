@@ -30,6 +30,8 @@ namespace Codec
             MArchiveV1VirtualFileSystem.Register(services);
             SlotVirtualFileSystem.Register(services);
             SdtVirtualFileSystem.Register(services);
+            SdxVirtualFileSystem.Register(services);
+
             services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
                 if (parent is MArchiveV1VirtualFileSystem &&

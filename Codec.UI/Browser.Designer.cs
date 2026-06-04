@@ -59,6 +59,7 @@
             this.pathBox.Name = "pathBox";
             this.pathBox.Size = new Size(1203, 31);
             this.pathBox.TabIndex = 0;
+            this.pathBox.KeyPress += this.PathBox_KeyPress;
             this.pathBox.Validating += this.PathBox_Validating;
             // 
             // splitContainer
@@ -108,13 +109,13 @@
             this.entryContextMenu.ImageScalingSize = new Size(24, 24);
             this.entryContextMenu.Items.AddRange(new ToolStripItem[] { this.saveAsToolStripMenuItem });
             this.entryContextMenu.Name = "entryContextMenu";
-            this.entryContextMenu.Size = new Size(249, 69);
+            this.entryContextMenu.Size = new Size(167, 36);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Image = Properties.Resources.FontAwesome_FloppyDiskSolid_20x20;
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new Size(248, 32);
+            this.saveAsToolStripMenuItem.Size = new Size(166, 32);
             this.saveAsToolStripMenuItem.Text = "Save As...";
             this.saveAsToolStripMenuItem.Click += this.SaveButton_Click;
             // 

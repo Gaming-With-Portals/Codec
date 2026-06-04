@@ -139,6 +139,15 @@ namespace Codec.UI
             }
         }
 
+        private void PathBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = true;
+                this.Navigate(this.pathBox.Text);
+            }
+        }
+
         private void PathBox_Validating(object sender, CancelEventArgs e)
         {
             if (!this.suppressUpdates && !this.pathBox.Text.Equals(this.pathBox.Tag))

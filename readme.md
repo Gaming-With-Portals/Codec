@@ -1,8 +1,30 @@
 Codec
 =======
 
-Asset browser for Metal Gear Solid games.
+Asset browser for Metal Gear Solid games (and others).
 This project is licensed under the [GPL v3](LICENSE.md) license.
+
+Support for the following formats is implemented:
+
+- Archives
+  - Generic
+    - .iso Images
+    - .bin/cue Images
+  - Metal Gear Specific
+    - M2 Archive (Master Collection v1)
+      - .psb.m Packaging Format
+    - STAGE.DAT Archive (MGS1 & MGSVR)
+    - .brf Briefing Files (MGS1 & MGSVR)
+    - .slot Data Files (MGS4)
+- Files
+  - Generic
+    - CD Audio Tracks
+    - All Basic Image Formats (PNG, JPEG, BMP, etc.)
+    - WAV & MP3 Audio Files
+    - .pcx Image Files
+  - Metal Gear Specific
+    - .tri Texture Files (MGS2 & MGS3)
+    - .ctxr Texture Files (MGS2 & MGS3)
 
 To view Master Collection resources, you will need to have a copy of the game on your system.  The tool will automatically detect the Steam location of the game, but you can browse to any location as desired.
 

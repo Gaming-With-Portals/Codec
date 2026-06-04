@@ -3,9 +3,11 @@
 namespace Codec.Archives
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using DiscUtils.Streams;
 
-    public class OffsetStreamSpan : Stream
+    public class OffsetStreamSpan : SparseStream
     {
         private readonly Stream underlying;
         private readonly long offset;
@@ -44,6 +46,8 @@ namespace Codec.Archives
                 this.position = value;
             }
         }
+
+        public override IEnumerable<StreamExtent> Extents => [new StreamExtent(0, this.Length)];
 
         public override void Flush() => this.underlying.Flush();
 

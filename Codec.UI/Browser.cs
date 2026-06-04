@@ -50,8 +50,8 @@ namespace Codec.UI
                 entry =>
                 {
                     this.fsm.TryFindParentFileSystem(entry.Path, out var subPath, out var fs, out var fsPath);
-                    var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
-                    return Task.FromResult(resolver(entry.Path, subPath, fs, fsPath));
+                    var resolved = this.serviceProvider.Resolve(this.imageResolvers, entry.Path, subPath, fs!, fsPath!);
+                    return Task.FromResult(resolved!);
                 },
                 InterpolationMode.NearestNeighbor)
             {
@@ -162,8 +162,7 @@ namespace Codec.UI
                     {
                         case FileType.Image:
                             {
-                                var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
-                                if (resolver != null)
+                                if (this.serviceProvider.Resolve(this.imageResolvers, entry.Path, subPath, fs, fsPath) is var image)
                                 {
                                     var childForm = new Form
                                     {
@@ -175,7 +174,7 @@ namespace Codec.UI
                                     {
                                         Dock = DockStyle.Fill,
                                         SizeMode = PictureBoxSizeMode.Zoom,
-                                        Image = resolver(entry.Path, subPath, fs, fsPath),
+                                        Image = image,
                                         BackColor = Color.Black,
                                     });
                                     this.ShowChild(childForm);
@@ -186,7 +185,8 @@ namespace Codec.UI
                             {
                                 try
                                 {
-                                    var childForm = new AudioPreviewForm(fs.File.OpenRead(subPath))
+                                    var audioStream = this.serviceProvider.Resolve<MemoryStream>(entry.Path, subPath, fs, fsPath) ?? (Stream)fs.File.OpenRead(subPath);
+                                    var childForm = new AudioPreviewForm(audioStream)
                                     {
                                         Text = fs.Path.GetFileName(subPath),
                                     };
@@ -274,16 +274,17 @@ namespace Codec.UI
                 {
                     using var input = fs.File.OpenRead(subPath);
                     var path = this.saveSelectedDialog.FileName;
-                    var resolver = this.imageResolvers.Select(f => f(this.serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
-                    if (Path.GetExtension(path) != Path.GetExtension(subPath) && resolver != null)
+                    if (Path.GetExtension(path) != Path.GetExtension(subPath))
                     {
-                        resolver(entry.Path, subPath, fs, fsPath).Save(path);
+                        if (this.serviceProvider.Resolve(this.imageResolvers, entry.Path, subPath, fs, fsPath) is var resolved)
+                        {
+                            resolved.Save(path);
+                            return;
+                        }
                     }
-                    else
-                    {
-                        using var output = File.Create(path);
-                        input.CopyTo(output);
-                    }
+
+                    using var output = File.Create(path);
+                    input.CopyTo(output);
                 }
             }
             else if (this.entryList.SelectedItems.Count >= 0)

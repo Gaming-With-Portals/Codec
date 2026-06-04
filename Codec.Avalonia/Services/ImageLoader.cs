@@ -25,37 +25,33 @@
                 return null;
             }
 
-            var handler = resolvers
-                .Select(f => f(serviceProvider, entry.Path, subPath, fs, fsPath))
-                .FirstOrDefault(f => f is not null);
-
-            if (handler is null)
+            foreach (var handler in resolvers.Select(f => f(serviceProvider, entry.Path, subPath, fs, fsPath)).Where(f => f is not null))
             {
-                return null;
-            }
-
-            await this.semaphore.WaitAsync(cancel).ConfigureAwait(false);
-            Bitmap bmp;
-            System.Drawing.Bitmap? drawingBitmap = null;
-            try
-            {
+                await this.semaphore.WaitAsync(cancel).ConfigureAwait(false);
+                Bitmap bmp;
+                System.Drawing.Bitmap? drawingBitmap = null;
                 try
                 {
-                    drawingBitmap = handler(entry.Path, subPath, fs, fsPath);
+                    try
+                    {
+                        drawingBitmap = handler(entry.Path, subPath, fs, fsPath);
+                    }
+                    finally
+                    {
+                        this.semaphore.Release();
+                    }
+
+                    bmp = ConvertToAvaloniaBitmap(drawingBitmap);
                 }
                 finally
                 {
-                    this.semaphore.Release();
+                    drawingBitmap?.Dispose();
                 }
 
-                bmp = ConvertToAvaloniaBitmap(drawingBitmap);
-            }
-            finally
-            {
-                drawingBitmap?.Dispose();
+                return bmp;
             }
 
-            return bmp;
+            return null;
         }
 
         private static Bitmap? ConvertToAvaloniaBitmap(System.Drawing.Bitmap? src)

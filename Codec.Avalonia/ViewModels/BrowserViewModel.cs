@@ -13,6 +13,7 @@
 
     public partial class BrowserViewModel : ObservableObject
     {
+        private readonly IServiceProvider serviceProvider;
         private readonly NestedFileSystemManager fsm;
         private readonly ImageLoader imageLoader;
         private bool navigating;
@@ -31,12 +32,14 @@
         private ViewMode currentViewMode = ViewMode.List;
 
         public BrowserViewModel(
+            IServiceProvider serviceProvider,
             NestedFileSystemManager fsm,
             FileTreeViewModel fileTreeViewModel,
             ImageLoader imageLoader,
             EntryListViewModel entryListViewModel,
             EnvironmentOptions env)
         {
+            this.serviceProvider = serviceProvider;
             this.fsm = fsm;
             this.imageLoader = imageLoader;
             this.currentPath = Path.Combine(
@@ -103,7 +106,9 @@
                     {
                         if (this.fsm.TryFindParentFileSystem(item.Entry.Path, out var subPath, out var fs, out var fsPath))
                         {
-                            this.AudioPreviewRequested?.Invoke(this, (fs.Path.GetFileName(item.Entry.Path), fs.File.OpenRead(subPath)));
+                            var audioStream = this.serviceProvider.Resolve<MemoryStream>(item.Entry.Path, subPath, fs, fsPath) ?? (Stream)fs.File.OpenRead(subPath);
+
+                            this.AudioPreviewRequested?.Invoke(this, (fs.Path.GetFileName(item.Entry.Path), audioStream));
                         }
                     }
                     break;

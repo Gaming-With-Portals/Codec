@@ -3,6 +3,8 @@
 namespace Codec
 {
     using System;
+    using System.Collections.Generic;
+    using System.IO.Abstractions;
     using System.Linq;
     using Codec.Archives;
     using Codec.Files;
@@ -11,7 +13,7 @@ namespace Codec
     using DiscUtils.Iso9660;
     using Microsoft.Extensions.DependencyInjection;
 
-    public class ServiceRegistration
+    public static class ServiceRegistration
     {
         public static void Register(IServiceCollection services)
         {
@@ -53,5 +55,17 @@ namespace Codec
 
             SetupHelper.SetupComplete();
         }
+
+        public static T? Resolve<T>(this IServiceProvider services, string path, string subPath, IFileSystem fs, string fsPath) =>
+            services.Resolve(services.GetServices<FileHandlerResolver<T>>(), path, subPath, fs, fsPath);
+
+        public static T? Resolve<T>(this IServiceProvider services, IEnumerable<FileHandlerResolver<T>> resolvers, string path, string subPath, IFileSystem fs, string fsPath) =>
+            (from filter in resolvers
+             where filter != null
+             let resolver = filter(services, path, subPath, fs, fsPath)
+             where resolver is not null
+             let image = resolver(path, subPath, fs, fsPath)
+             where image is not null
+             select image).FirstOrDefault();
     }
 }

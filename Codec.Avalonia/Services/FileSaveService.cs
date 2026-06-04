@@ -59,16 +59,17 @@
             {
                 using var input = fs.File.OpenRead(subPath);
                 var path = file.Path.LocalPath;
-                var resolver = this.ImageResolvers.Select(f => f(serviceProvider, entry.Path, subPath, fs, fsPath)).FirstOrDefault(f => f is not null);
-                if (Path.GetExtension(path) != Path.GetExtension(subPath) && resolver != null)
+                if (Path.GetExtension(path) != Path.GetExtension(subPath))
                 {
-                    resolver(entry.Path, subPath, fs, fsPath).Save(path);
+                    if (serviceProvider.Resolve(this.ImageResolvers, entry.Path, subPath, fs, fsPath) is var resolved)
+                    {
+                        resolved.Save(path);
+                        return;
+                    }
                 }
-                else
-                {
-                    using var output = File.Create(path);
-                    input.CopyTo(output);
-                }
+
+                using var output = File.Create(path);
+                input.CopyTo(output);
             }
         }
 

@@ -19,6 +19,7 @@ namespace Codec
             TriFile.Register(services);
             ImageMagickBitmapResolver.Register(services);
 
+            CDReaderVFSAdapter.Register(services);
             BrfDatVirtualFileSystem.Register(services);
             StageDirVirtualFileSystem.Register(services);
             PsbVirtualFileSystem.Register(services);

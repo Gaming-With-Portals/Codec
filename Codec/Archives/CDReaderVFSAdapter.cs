@@ -5,9 +5,13 @@
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.IO.Abstractions;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using CueSharp;
     using DiscUtils.Iso9660;
+    using Microsoft.Extensions.DependencyInjection;
 
-    internal class CDReaderVFSAdapter : FileSystemBase
+    internal partial class CDReaderVFSAdapter : FileSystemBase
     {
         private readonly CDReader cdReader;
 
@@ -17,6 +21,53 @@
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);
             this.Path = new PathProvider(this);
+        }
+
+        public static void Register(IServiceCollection services)
+        {
+
+            services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
+            {
+
+                if (parent is CueSheetVFS cueFS &&
+                    TrackMatcher().Match(parentRelativePath) is { Success: true } match &&
+                    int.TryParse(match.Groups[1].Value, out var trackNumber) &&
+                    cueFS.CueSheet.Tracks[trackNumber - 1] is Track track &&
+                    track.TrackDataType.ToString().StartsWith("MODE", StringComparison.Ordinal))
+                {
+                    return new FileSystemFactory((fullPath, parentRelativePath, parent, parentPath) => CreateCueTrackFileSystem(cueFS.CueSheetPath, cueFS.Parent, track));
+                }
+
+                if (string.Equals(parent.Path.GetExtension(parentRelativePath), ".cue", StringComparison.OrdinalIgnoreCase))
+                {
+                    return static (fullPath, parentRelativePath, parent, parentPath) =>
+                    {
+                        using var cueStream = parent.File.OpenRead(parentRelativePath);
+                        using var reader = new StreamReader(cueStream);
+                        var cue = new CueSheet(reader);
+                        if (cue.Tracks is [Track track] && track.TrackDataType.ToString().StartsWith("MODE", StringComparison.Ordinal))
+                        {
+                            return CreateCueTrackFileSystem(parentRelativePath, parent, track);
+                        }
+                        else
+                        {
+                            return new CueSheetVFS(parentRelativePath, parent, cue);
+                        }
+                    };
+                }
+
+                if (string.Equals(parent.Path.GetExtension(parentRelativePath), ".iso", StringComparison.OrdinalIgnoreCase))
+                {
+                    return static (fullPath, parentRelativePath, parent, parentPath) =>
+                    {
+                        var file = parent.File.OpenRead(parentRelativePath);
+                        var cdReader = new CDReader(file, joliet: true);
+                        return new CDReaderVFSAdapter(cdReader);
+                    };
+                }
+
+                return null;
+            });
         }
 
         private static string[] FilterNames(string[] names)
@@ -33,6 +84,103 @@
                     return name;
                 }
             });
+        }
+
+        private static CDReaderVFSAdapter CreateCueTrackFileSystem(string parentRelativePath, IFileSystem parent, Track track)
+        {
+            var stream = OpenTrackFile(parentRelativePath, parent, track);
+            var cdReader = new CDReader(
+                track.TrackDataType switch
+                {
+                    DataType.MODE1_2048 => stream,
+                    DataType.MODE1_2352 => new CDSectorStream(stream, CDSectorStream.Mode1),
+                    DataType.MODE2_2336 => new CDSectorStream(stream, CDSectorStream.Mode2),
+                    DataType.MODE2_2352 => new CDSectorStream(stream, CDSectorStream.XAForm1),
+                },
+                joliet: true);
+            return new CDReaderVFSAdapter(cdReader);
+        }
+
+        private static FileSystemStream OpenTrackFile(string parentRelativePath, IFileSystem parent, Track track)
+        {
+            var binPath = parent.Path.Combine(
+                parent.Path.GetDirectoryName(parentRelativePath)!,
+                track.DataFile.Filename);
+            var stream = parent.File.OpenRead(binPath);
+            return stream;
+        }
+
+        [GeneratedRegex(@"Track (\d+)")]
+        private static partial Regex TrackMatcher();
+
+        private class CueSheetVFS : IndexedFileSystem<Track>
+        {
+            public CueSheet CueSheet { get; }
+
+            public string CueSheetPath { get; }
+
+            public IFileSystem Parent { get; }
+
+            public CueSheetVFS(string path, IFileSystem parent, CueSheet cue)
+            {
+                this.Parent = parent ?? new FileSystem();
+                this.CueSheetPath = path;
+                this.CueSheet = cue;
+            }
+
+            protected override IEnumerable<Track> ReadIndex() => this.CueSheet.Tracks;
+
+            protected override string GetEntryName(Track entry) =>
+                $"Track {entry.TrackNumber}.{(entry.TrackDataType == DataType.AUDIO ? "cdda" : "bin")}";
+
+            protected override Stream OpenRead(Track entry)
+            {
+                if (entry.TrackDataType.ToString().StartsWith("MODE", StringComparison.Ordinal))
+                {
+                    return OpenTrackFile(this.CueSheetPath, this.Parent, entry);
+                }
+
+                if (entry.TrackDataType == DataType.AUDIO)
+                {
+                    static int MsfToLba(CueSharp.Index index)
+                    {
+                        return ((index.Minutes * 60) + index.Seconds) * 75 + index.Frames;
+                    }
+
+                    static int GetLba(Track entry)
+                    {
+                        var startIndex = entry.Indices.Single(x => x.Number == 1);
+                        var startLba = MsfToLba(startIndex);
+                        return startLba;
+                    }
+
+                    var trackIndex = entry.TrackNumber - 1;
+                    var fileEntry = entry;
+                    if (fileEntry.DataFile.Filename == null)
+                    {
+                        for (var i = trackIndex - 1; i >= 0; i--)
+                        {
+                            fileEntry = this.CueSheet.Tracks[i];
+                            if (fileEntry.DataFile.Filename != null)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    var binStream = OpenTrackFile(this.CueSheetPath, this.Parent, fileEntry);
+                    var startLba = GetLba(entry);
+                    var endLba = trackIndex + 1 < this.CueSheet.Tracks.Length
+                        ? GetLba(this.CueSheet.Tracks[trackIndex + 1])
+                        : binStream.Length / 2352;
+                    return new OffsetStreamSpan(
+                        binStream,
+                        startLba * 2352L,
+                        (endLba - startLba) * 2352L);
+                }
+
+                throw new FileNotFoundException();
+            }
         }
 
         private class DirectoryProvider(CDReaderVFSAdapter parent) : DirectoryBase(parent)

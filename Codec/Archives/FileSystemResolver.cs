@@ -3,7 +3,7 @@
     using System;
     using System.IO.Abstractions;
 
-    public delegate IFileSystem FileSystemFactory(string fullPath, string parentRelativePath, IFileSystem parent, string parentPath);
+    public delegate IFileSystem? FileSystemFactory(string fullPath, string parentRelativePath, IFileSystem parent, string parentPath);
 
     public delegate FileSystemFactory? FileSystemHandler(string fullPath, string fileSystemRelativePath, IFileSystem parent, string parentPath);
 

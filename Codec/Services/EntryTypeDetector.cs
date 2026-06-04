@@ -43,6 +43,7 @@
                 ".MKV" or
                 ".WEBM" => EntryType.Video,
 
+                ".CDA" or ".CDDA" or
                 ".MID" or ".MIDI" or
                 ".MP3" or
                 ".OGG" or

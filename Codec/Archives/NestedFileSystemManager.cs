@@ -23,7 +23,8 @@
 
         public bool TryFindParentFileSystem(string path, out string parentRelativePath, [NotNullWhen(true)] out IFileSystem? parent, [NotNullWhen(true)] out string? parentPath)
         {
-            if (this.fileSystems.TryGetValue(path, out parent))
+            var found = this.fileSystems.TryGetValue(path, out parent);
+            if (found && parent != null)
             {
                 parentPath = path;
                 parentRelativePath = string.Empty;
@@ -33,15 +34,19 @@
             if (PathExtensions.GetDirectoryName(path) is string directoryName && this.TryFindParentFileSystem(directoryName, out var relativePath, out parent, out parentPath))
             {
                 parentRelativePath = parent.Path.Combine(relativePath, directoryName == string.Empty ? path : parent.Path.GetRelativePath(directoryName, path));
-                if (this.GetOrAddFactory(path, parentRelativePath, parent, parentPath, out var factory))
+                if (!found && this.GetOrAddFactory(path, parentRelativePath, parent, parentPath, out var factory))
                 {
                     if (parent.File.Exists(parentRelativePath))
                     {
-                        parent = factory(path, parentRelativePath, parent, parentPath);
-                        this.fileSystems.Add(path, parent);
+                        var newParent = factory(path, parentRelativePath, parent, parentPath);
+                        this.fileSystems.Add(path, newParent);
                         this.nestedFactories.Remove(path);
-                        parentPath = path;
-                        parentRelativePath = string.Empty;
+                        if (newParent != null)
+                        {
+                            parent = newParent;
+                            parentPath = path;
+                            parentRelativePath = string.Empty;
+                        }
                     }
                 }
 

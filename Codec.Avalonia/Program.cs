@@ -2,7 +2,6 @@
 {
     using System;
     using System.CommandLine;
-    using System.Threading.Tasks;
     using global::Avalonia;
     using Codec.Avalonia.Services;
     using Codec.Avalonia.ViewModels;

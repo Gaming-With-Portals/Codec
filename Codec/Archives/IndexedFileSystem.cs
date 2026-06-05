@@ -101,7 +101,7 @@
                     }
                 }
 
-                if (!prefixFound)
+                if (!prefixFound && !string.IsNullOrEmpty(prefix))
                 {
                     throw new DirectoryNotFoundException(path);
                 }

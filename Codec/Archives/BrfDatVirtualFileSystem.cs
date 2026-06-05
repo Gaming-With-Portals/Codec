@@ -6,6 +6,7 @@
     using System.IO;
     using System.IO.Abstractions;
     using System.Text;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
     using Entry = (string FolderName, string FileName, long Offset, long Length);
 
@@ -35,7 +36,7 @@
             this.Path.Combine(entry.FolderName, entry.FileName);
 
         protected override Stream OpenRead(Entry entry) =>
-            new OffsetStreamSpan(parent.File.OpenRead(parentRelativePath), entry.Offset, entry.Length);
+            new OffsetStreamSpan(parent.File.OpenRead(parentRelativePath), entry.Offset, entry.Length, Ownership.Dispose);
 
         private static void Align(Stream stream, long alignment)
         {

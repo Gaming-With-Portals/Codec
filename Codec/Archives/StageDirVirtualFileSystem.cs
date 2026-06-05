@@ -11,6 +11,7 @@ namespace Codec.Archives
     using System.Linq;
     using System.Text;
     using Codec;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
     using DirEntry = (string name, long offset);
     using FileEntry = (string name, long offset, long size);
@@ -254,7 +255,7 @@ namespace Codec.Archives
 
             if (this.GetStreamSpanRange(path) is (long offset, long size))
             {
-                return new OffsetStreamSpan(this.parent.File.OpenRead(this.parentRelativePath), offset, size);
+                return new OffsetStreamSpan(this.parent.File.OpenRead(this.parentRelativePath), offset, size, Ownership.Dispose);
             }
 
             throw new FileNotFoundException(new FileNotFoundException().Message, path);

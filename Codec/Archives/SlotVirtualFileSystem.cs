@@ -8,6 +8,7 @@
     using System.IO.Abstractions;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
 
     internal class SlotVirtualFileSystem : IndexedFileSystem<SlotVirtualFileSystem.Entry>
@@ -224,7 +225,7 @@
             entry.Path;
 
         protected override Stream OpenRead(Entry entry) =>
-            new OffsetStreamSpan(this.fileSystem.File.OpenRead(this.filePath), entry.Offset, entry.Size);
+            new OffsetStreamSpan(this.fileSystem.File.OpenRead(this.filePath), entry.Offset, entry.Size, Ownership.Dispose);
 
         private static string GetExtension(uint ext) =>
             ExtensionsLookup[ext].FirstOrDefault() ?? ext.ToString("x2");

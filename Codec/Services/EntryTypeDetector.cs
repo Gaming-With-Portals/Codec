@@ -30,6 +30,7 @@
                 ".BMP" or
                 ".CTXR" or
                 ".GIF" or
+                ".IMG" or
                 ".TIF" or ".TIFF" or
                 ".TM2" or
                 ".PCX" or

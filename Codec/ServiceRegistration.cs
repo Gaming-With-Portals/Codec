@@ -24,6 +24,7 @@ namespace Codec
 
             CDReaderVFSAdapter.Register(services);
             BrfDatVirtualFileSystem.Register(services);
+            FaceDatVirtualFileSystem.Register(services);
             StageDirVirtualFileSystem.Register(services);
             PsbVirtualFileSystem.Register(services);
             MVirtualFileSystem.Register(services);

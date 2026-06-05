@@ -8,7 +8,7 @@
     {
         public static void Register(IServiceCollection services)
         {
-            services.AddSingleton<FileHandlerResolver<MemoryStream>>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
+            services.AddSingleton<FileHandlerResolver<AudioStream>>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
                 var ext = parent.Path.GetExtension(parentRelativePath);
                 if (string.Equals(ext, ".cda", StringComparison.OrdinalIgnoreCase) ||
@@ -17,7 +17,7 @@
                     return (fullPath, parentRelativePath, parent, parentPath) =>
                     {
                         using var input = parent.File.OpenRead(parentRelativePath);
-                        return Read(input);
+                        return (AudioStream)Read(input);
                     };
                 }
 

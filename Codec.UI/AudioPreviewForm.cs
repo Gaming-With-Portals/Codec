@@ -1,8 +1,8 @@
 ﻿namespace Codec.UI
 {
     using System;
-    using System.IO;
     using System.Windows.Forms;
+    using Codec.Files;
     using Codec.Services;
     using Codec.UI.Properties;
 
@@ -10,7 +10,7 @@
     {
         private readonly AudioPlayer audioPlayer;
 
-        public AudioPreviewForm(Stream mediaStream)
+        public AudioPreviewForm(AudioStream mediaStream)
         {
             this.audioPlayer = new AudioPlayer(mediaStream);
             this.InitializeComponent();

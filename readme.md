@@ -16,6 +16,7 @@ Support for the following formats is implemented:
     - .sdt Sound Packs (MGS2)
     - .sdx Sound Packs (MGS2)
     - STAGE.DAT Archive (MGS1 & MGSVR)
+    - FACE.DAT Archive (MGS1)
     - .brf Briefing Files (MGS1 & MGSVR)
     - .slot Data Files (MGS4)
 - Files
@@ -29,8 +30,6 @@ Support for the following formats is implemented:
     - .ctxr Texture Files (MGS2 & MGS3)
 
 To view Master Collection resources, you will need to have a copy of the game on your system.  The tool will automatically detect the Steam location of the game, but you can browse to any location as desired.
-
-Launch the tool using the key in the [launch settings](Codec.UI/Properties/launchSettings.json).
 
 |||
 |-|-|
@@ -50,7 +49,7 @@ OpenSource Info
 | [CueSharp](https://www.nuget.org/packages/CueSharp) | [BSD](https://www.nuget.org/packages/CueSharp/1.0.1/License) | CUE format |
 | [DiscUtils](https://github.com/DiscUtils/DiscUtils) | [MIT](https://github.com/DiscUtils/DiscUtils/blob/develop/LICENSE.txt) | ISO format |
 | [GMWare.M2](https://gitlab.com/modmyclassic/sega-mega-drive-mini/marchive-batch-tool) | [GPL 3.0](https://gitlab.com/modmyclassic/sega-mega-drive-mini/marchive-batch-tool/-/blob/master/COPYING) | M2 Archive format |
-| [MGS1-TOOLS](https://github.com/MSylvia/MGS1-TOOLS) | | Reference code |
+| [metalgeardev/MGS1](https://github.com/metalgeardev/MGS1) | | Reference code |
 | [mgs_reversing](https://github.com/FoxdieTeam/mgs_reversing) | | Reference code |
 | [CtxrTool](https://github.com/Jayveer/CtxrTool) | [MIT](https://github.com/Jayveer/CtxrTool/blob/master/README.md) | Reference code |
 | [MGS-Master-Collection-Noesis](https://github.com/Jayveer/MGS-Master-Collection-Noesis) | | Reference code |

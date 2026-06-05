@@ -194,7 +194,7 @@ namespace Codec.UI
                             {
                                 try
                                 {
-                                    var audioStream = this.serviceProvider.Resolve<MemoryStream>(entry.Path, subPath, fs, fsPath) ?? (Stream)fs.File.OpenRead(subPath);
+                                    var audioStream = this.serviceProvider.Resolve<AudioStream>(entry.Path, subPath, fs, fsPath) ?? (AudioStream)fs.File.OpenRead(subPath);
                                     var childForm = new AudioPreviewForm(audioStream)
                                     {
                                         Text = fs.Path.GetFileName(subPath),

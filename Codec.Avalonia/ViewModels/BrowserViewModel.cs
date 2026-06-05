@@ -5,6 +5,7 @@
     using Codec.Archives;
     using Codec.Avalonia.Models;
     using Codec.Avalonia.Services;
+    using Codec.Files;
     using CommunityToolkit.Mvvm.ComponentModel;
     using CommunityToolkit.Mvvm.Input;
     using global::Avalonia.Media.Imaging;
@@ -106,7 +107,7 @@
                     {
                         if (this.fsm.TryFindParentFileSystem(item.Entry.Path, out var subPath, out var fs, out var fsPath))
                         {
-                            var audioStream = this.serviceProvider.Resolve<MemoryStream>(item.Entry.Path, subPath, fs, fsPath) ?? (Stream)fs.File.OpenRead(subPath);
+                            var audioStream = this.serviceProvider.Resolve<AudioStream>(item.Entry.Path, subPath, fs, fsPath) ?? (AudioStream)fs.File.OpenRead(subPath);
 
                             this.AudioPreviewRequested?.Invoke(this, (fs.Path.GetFileName(item.Entry.Path), audioStream));
                         }
@@ -134,7 +135,7 @@
             }
         }
 
-        public event EventHandler<(string FileName, Stream Stream)>? AudioPreviewRequested;
+        public event EventHandler<(string FileName, AudioStream Stream)>? AudioPreviewRequested;
 
         public event EventHandler<(string FileName, Bitmap Bitmap)>? ImagePreviewRequested;
     }

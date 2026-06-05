@@ -4,14 +4,14 @@
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using System.IO.Abstractions;
     using System.Text;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
     using Entry = (string FolderName, string FileName, long Offset, long Length);
 
-    internal class BrfDatVirtualFileSystem(Stream sourceStream) : IndexedFileSystem<Entry>
+    internal class BrfDatVirtualFileSystem(string parentRelativePath, IFileSystem parent) : IndexedFileSystem<Entry>
     {
-        private Stream sourceStream = sourceStream;
-
         public static void Register(IServiceCollection services)
         {
             services.AddSingleton<FileSystemResolver>((servicProvider, fullPath, parentRelativePath, parent, parentPath) =>
@@ -19,30 +19,24 @@
                 if (string.Equals(parent.Path.GetFileName(parentRelativePath), "BRF.DAT", StringComparison.OrdinalIgnoreCase))
                 {
                     return static (fullPath, parentRelativePath, parent, parentPath) =>
-                    {
-                        var file = parent.File.OpenRead(parentRelativePath);
-                        return new BrfDatVirtualFileSystem(file);
-                    };
+                        new BrfDatVirtualFileSystem(parentRelativePath, parent);
                 }
 
                 return null;
             });
         }
 
-        protected override void Dispose(bool disposing)
+        protected override IEnumerable<Entry> ReadIndex()
         {
-            this.sourceStream?.Dispose();
-            this.sourceStream = null!;
+            using var file = parent.File.OpenRead(parentRelativePath);
+            return ReadIndex(file);
         }
-
-        protected override IEnumerable<Entry> ReadIndex() =>
-            ReadIndex(this.sourceStream);
 
         protected override string GetEntryName(Entry entry) =>
             this.Path.Combine(entry.FolderName, entry.FileName);
 
         protected override Stream OpenRead(Entry entry) =>
-            new OffsetStreamSpan(this.sourceStream, entry.Offset, entry.Length);
+            new OffsetStreamSpan(parent.File.OpenRead(parentRelativePath), entry.Offset, entry.Length, Ownership.Dispose);
 
         private static void Align(Stream stream, long alignment)
         {

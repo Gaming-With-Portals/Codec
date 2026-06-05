@@ -7,6 +7,7 @@ namespace Codec.Archives
     using System.IO;
     using System.IO.Abstractions;
     using System.Linq;
+    using DiscUtils.Streams;
     using GMWare.M2.Models;
     using Microsoft.Extensions.DependencyInjection;
     using Entry = (string Path, long Offset, long Length);
@@ -54,6 +55,6 @@ namespace Codec.Archives
             entry.Path;
 
         protected override Stream OpenRead(Entry entry) =>
-            new OffsetStreamSpan(this.fileSystem.File.OpenRead(this.binPath), entry.Offset, entry.Length);
+            new OffsetStreamSpan(this.fileSystem.File.OpenRead(this.binPath), entry.Offset, entry.Length, Ownership.Dispose);
     }
 }

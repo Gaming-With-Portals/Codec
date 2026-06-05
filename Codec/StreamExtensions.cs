@@ -6,6 +6,7 @@ namespace Codec
     using System.Buffers.Binary;
     using System.IO;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
     internal static class StreamExtensions
@@ -66,6 +67,62 @@ namespace Codec
             return BinaryPrimitives.ReadDoubleBigEndian(b);
         }
 
+        public static short ReadInt16LittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(short)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadInt16LittleEndian(b);
+        }
+
+        public static ushort ReadUInt16LittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(ushort)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadUInt16LittleEndian(b);
+        }
+
+        public static int ReadInt32LittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(int)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadInt32LittleEndian(b);
+        }
+
+        public static uint ReadUInt32LittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(uint)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadUInt32LittleEndian(b);
+        }
+
+        public static long ReadInt64LittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(long)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadInt64LittleEndian(b);
+        }
+
+        public static ulong ReadUInt64LittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(ulong)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadUInt64LittleEndian(b);
+        }
+
+        public static float ReadSingleLittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(float)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadSingleLittleEndian(b);
+        }
+
+        public static double ReadDoubleLittleEndian(this Stream s)
+        {
+            Span<byte> b = stackalloc byte[sizeof(double)];
+            s.ReadExactly(b);
+            return BinaryPrimitives.ReadDoubleLittleEndian(b);
+        }
+
         public static void ReadExactly(this Stream source, byte[] buffer, int count) => source.ReadExactly(buffer, 0, count);
 
         public static void CopyTo(this Stream source, Stream destination, long offset, SeekOrigin origin, long count)
@@ -107,12 +164,29 @@ namespace Codec
         }
 
         public static T ReadBigEndian<T>(this Stream stream)
+            where T : struct =>
+            ReadWithEndianness<T>(stream, swapEndianness: BitConverter.IsLittleEndian);
+
+        public static T ReadLittleEndian<T>(this Stream stream)
+            where T : struct =>
+            ReadWithEndianness<T>(stream, swapEndianness: !BitConverter.IsLittleEndian);
+
+        public static T ReadSytemEndianness<T>(this Stream stream)
+            where T : struct =>
+            ReadWithEndianness<T>(stream, false);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static T ReadWithEndianness<T>(this Stream stream, bool swapEndianness)
             where T : struct
         {
             var size = Marshal.SizeOf<T>();
             var buffer = size < 64 ? stackalloc byte[size] : new byte[size].AsSpan();
             stream.ReadExactly(buffer);
-            SwapFields(buffer, typeof(T));
+            if (swapEndianness)
+            {
+                SwapFields(buffer, typeof(T));
+            }
+
             return MemoryMarshal.Cast<byte, T>(buffer)[0];
         }
 

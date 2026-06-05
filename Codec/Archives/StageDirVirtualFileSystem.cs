@@ -11,6 +11,7 @@ namespace Codec.Archives
     using System.Linq;
     using System.Text;
     using Codec;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
     using DirEntry = (string name, long offset);
     using FileEntry = (string name, long offset, long size);
@@ -48,12 +49,15 @@ namespace Codec.Archives
 
         private readonly DirEntry[] index;
         private readonly Dictionary<string, FileEntry[]> fileEntries = [];
-        private Stream sourceStream;
+        private readonly string parentRelativePath;
+        private readonly IFileSystem parent;
 
-        public StageDirVirtualFileSystem(Stream sourceStream)
+        public StageDirVirtualFileSystem(string parentRelativePath, IFileSystem parent)
         {
-            this.index = ReadIndex(sourceStream);
-            this.sourceStream = sourceStream;
+            this.parentRelativePath = parentRelativePath;
+            this.parent = parent;
+            using var source = parent.File.OpenRead(parentRelativePath);
+            this.index = ReadIndex(source);
 
             this.Directory = new DirectoryProvider(this);
             this.File = new FileProvider(this);
@@ -61,16 +65,12 @@ namespace Codec.Archives
 
         public static void Register(IServiceCollection services)
         {
-            services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, fileSystemRelativePath, fileSystem, fileSystemPath) =>
+            services.AddSingleton<FileSystemResolver>((serviceProvider, fullPath, parentRelativePath, parent, parentPath) =>
             {
-                if (string.Equals(fileSystem.Path.GetFileName(fileSystemRelativePath), "STAGE.DIR", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(parent.Path.GetFileName(parentRelativePath), "STAGE.DIR", StringComparison.OrdinalIgnoreCase))
                 {
-                    return static (fullPath, fileSystemRelativePath, fileSystem, fileSystemPath) =>
-                    {
-                        var file = fileSystem.File.OpenRead(fileSystemRelativePath);
-                        var subFs = new StageDirVirtualFileSystem(file);
-                        return subFs;
-                    };
+                    return static (fullPath, parentRelativePath, parent, parentPath) =>
+                        new StageDirVirtualFileSystem(parentRelativePath, parent);
                 }
 
                 return null;
@@ -211,12 +211,6 @@ namespace Codec.Archives
             return entries.OrderBy(e => e.name).ToArray();
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            this.sourceStream?.Dispose();
-            this.sourceStream = null!;
-        }
-
         private FileEntry[] GetFileIndex(string path)
         {
             var ix = Array.FindIndex(this.index, e => e.name == path);
@@ -228,7 +222,8 @@ namespace Codec.Archives
             if (!this.fileEntries.TryGetValue(path, out var files))
             {
                 var entry = this.index[ix];
-                this.fileEntries[path] = files = ReadList(this.sourceStream, entry.offset);
+                using var stream = this.parent.File.OpenRead(this.parentRelativePath);
+                this.fileEntries[path] = files = ReadList(stream, entry.offset);
             }
 
             return files;
@@ -260,7 +255,7 @@ namespace Codec.Archives
 
             if (this.GetStreamSpanRange(path) is (long offset, long size))
             {
-                return new OffsetStreamSpan(this.sourceStream, offset, size);
+                return new OffsetStreamSpan(this.parent.File.OpenRead(this.parentRelativePath), offset, size, Ownership.Dispose);
             }
 
             throw new FileNotFoundException(new FileNotFoundException().Message, path);

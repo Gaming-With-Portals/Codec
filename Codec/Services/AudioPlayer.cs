@@ -5,6 +5,7 @@
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using Codec.Files;
     using NAudio.Wave;
 
     public sealed class AudioPlayer : IDisposable, INotifyPropertyChanged
@@ -23,7 +24,7 @@
 
         public bool Playing => this.waveOut?.PlaybackState == PlaybackState.Playing;
 
-        public AudioPlayer(Stream stream, bool ownsStream = true)
+        public AudioPlayer(AudioStream stream, bool ownsStream = true)
         {
             using var reader = new StreamMediaFoundationReader(stream);
 
@@ -33,7 +34,7 @@
 
             if (ownsStream)
             {
-                stream.Dispose();
+                stream.Stream.Dispose();
             }
 
             this.reader = new WaveFileReader(ms);
@@ -53,7 +54,7 @@
             return tcs.Task;
         }
 
-        public static async Task<bool> PlayAsync(Stream mediaStream)
+        public static async Task<bool> PlayAsync(AudioStream mediaStream)
         {
             using var audio = new AudioPlayer(mediaStream);
             return await audio.PlayAsync().ConfigureAwait(false);

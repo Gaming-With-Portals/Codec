@@ -2,7 +2,7 @@
 {
     using System;
     using System.ComponentModel;
-    using System.IO;
+    using Codec.Files;
     using Codec.Services;
     using CommunityToolkit.Mvvm.ComponentModel;
     using CommunityToolkit.Mvvm.Input;
@@ -13,7 +13,7 @@
     {
         private AudioPlayer AudioPlayer { get; }
 
-        public AudioPreviewWindow(Stream mediaStream)
+        public AudioPreviewWindow(AudioStream mediaStream)
         {
             this.AudioPlayer = new AudioPlayer(mediaStream);
             this.InitializeComponent();

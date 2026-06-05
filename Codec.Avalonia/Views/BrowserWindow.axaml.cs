@@ -1,11 +1,11 @@
 ﻿namespace Codec.Avalonia.Views
 {
     using System;
-    using System.IO;
     using global::Avalonia.Controls;
     using global::Avalonia.Media.Imaging;
     using Codec.Avalonia.ViewModels;
     using Codec.Services;
+    using Codec.Files;
 
     public partial class BrowserWindow : Window
     {
@@ -21,7 +21,7 @@
             this.DataContext = viewModel;
         }
 
-        private void OnAudioPreviewRequested(object? sender, (string FileName, Stream Stream) args)
+        private void OnAudioPreviewRequested(object? sender, (string FileName, AudioStream Stream) args)
         {
             try
             {

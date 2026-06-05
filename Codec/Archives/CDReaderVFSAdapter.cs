@@ -9,6 +9,7 @@
     using System.Text.RegularExpressions;
     using CueSharp;
     using DiscUtils.Iso9660;
+    using DiscUtils.Streams;
     using Microsoft.Extensions.DependencyInjection;
 
     internal partial class CDReaderVFSAdapter : FileSystemBase
@@ -176,7 +177,8 @@
                     return new OffsetStreamSpan(
                         binStream,
                         startLba * 2352L,
-                        (endLba - startLba) * 2352L);
+                        (endLba - startLba) * 2352L,
+                        Ownership.Dispose);
                 }
 
                 throw new FileNotFoundException();

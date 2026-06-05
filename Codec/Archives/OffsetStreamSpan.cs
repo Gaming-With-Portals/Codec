@@ -3,15 +3,18 @@
 namespace Codec.Archives
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using DiscUtils.Streams;
 
-    public class OffsetStreamSpan : Stream
+    public class OffsetStreamSpan : SparseStream
     {
         private readonly Stream underlying;
         private readonly long offset;
+        private readonly Ownership ownership;
         private long position;
 
-        public OffsetStreamSpan(Stream underlying, long offset, long length)
+        public OffsetStreamSpan(Stream underlying, long offset, long length, Ownership ownership)
         {
             (this.underlying, this.offset) = underlying switch
             {
@@ -20,6 +23,7 @@ namespace Codec.Archives
             };
 
             this.Length = length;
+            this.ownership = ownership;
         }
 
         public override bool CanRead => this.underlying.CanRead;
@@ -42,6 +46,23 @@ namespace Codec.Archives
 
                 this.underlying.Position = value + this.offset;
                 this.position = value;
+            }
+        }
+
+        public override IEnumerable<StreamExtent> Extents => [new StreamExtent(0, this.Length)];
+
+        protected override void Dispose(bool disposing)
+        {
+            try
+            {
+                if (disposing && this.ownership == Ownership.Dispose)
+                {
+                    this.underlying?.Dispose();
+                }
+            }
+            finally
+            {
+                base.Dispose(disposing);
             }
         }
 

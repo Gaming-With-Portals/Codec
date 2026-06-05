@@ -190,6 +190,38 @@ namespace Codec
             return MemoryMarshal.Cast<byte, T>(buffer)[0];
         }
 
+        public static T[] ReadArrayBigEndian<T>(this Stream stream, int count)
+            where T : struct =>
+            ReadArrayWithEndianness<T>(stream, count, swapEndianness: BitConverter.IsLittleEndian);
+
+        public static T[] ReadArrayLittleEndian<T>(this Stream stream, int count)
+            where T : struct =>
+            ReadArrayWithEndianness<T>(stream, count, swapEndianness: !BitConverter.IsLittleEndian);
+
+        public static T[] ReadArraySystemEndianness<T>(this Stream stream, int count)
+            where T : struct =>
+            ReadArrayWithEndianness<T>(stream, count, swapEndianness: false);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static T[] ReadArrayWithEndianness<T>(this Stream stream, int count, bool swapEndianness)
+            where T : struct
+        {
+            var elementSize = Marshal.SizeOf<T>();
+            var totalSize = checked(elementSize * count);
+            var buffer = totalSize < 64 ? stackalloc byte[totalSize] : new byte[totalSize].AsSpan();
+            stream.ReadExactly(buffer);
+
+            if (swapEndianness)
+            {
+                for (var offset = 0; offset < totalSize; offset += elementSize)
+                {
+                    SwapFields(buffer[offset..], typeof(T));
+                }
+            }
+
+            return MemoryMarshal.Cast<byte, T>(buffer).ToArray();
+        }
+
         private static void SwapFields(Span<byte> buffer, Type type)
         {
             foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
